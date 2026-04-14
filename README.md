@@ -1,36 +1,204 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DataLens
 
-## Getting Started
+## Overview
 
-First, run the development server:
+DataLens is a decision-first analytics system that converts raw tabular data into ranked, actionable strategies.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Input: arbitrary CSV
+Output: prioritized actions with quantified impact, reasoning, and simulation
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The system does not stop at analysis. It produces decisions.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Architecture
 
-## Learn More
+CSV Upload
+↓
+Feature Engine
+↓
+Model Training (multi-model)
+↓
+Model Selection (best F1 score)
+↓
+Decision Engine (action generation + scoring)
+↓
+Top 3 Actions (primary output)
+↓
+Simulation Engine (before/after impact)
+↓
+Chat Interface (data-grounded exploration)
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Key Components
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 1. CSV Upload + Feature Engine
 
-## Deploy on Vercel
+- Streaming CSV parsing (large datasets supported)
+- Automatic column type detection:
+  - numeric
+  - categorical
+  - date
+  - target
+- Data preview and mapping
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 2. Model Layer
+
+Multiple models trained in parallel:
+
+- Logistic Regression\
+- Random Forest\
+- Gradient Boosting / XGBoost (or equivalent)
+
+Evaluation metrics:
+- F1 Score (primary)
+- Precision
+- Recall
+
+Model selection:
+
+best_model = argmax(F1 score)\
+Only the selected model is used downstream.
+
+---
+
+### 3. Decision Engine
+
+Transforms model outputs into actions.
+
+#### Input:\
+- churn probabilities
+- segment assignments
+- feature importance
+
+#### Output:
+
+Action {
+    id
+    title
+    expectedImpact { delta, metric, confidence }
+    affectedUsers
+    reasoning[]
+}
+---
+
+### 4. Action Scoring
+
+Each action is ranked using:
+
+score = impact_weight * expected_lift
+
+-   confidence_weight * model_confidence
+-   coverage_weight * affected_users
+-   cost_penalty
+Breakdown:
+- Impact: magnitude of change (e.g. churn reduction)
+- Confidence: model certainty
+- Coverage: number of users affected
+- Cost: implementation penalty
+
+Top 3 actions are selected.
+
+---
+
+### 5. Simulation Engine
+
+Applies action effects to baseline metrics.
+
+before → after
+Example:
+
+Churn Rate: 18.2% → 15.0%
+At-risk Users: 184 → 127
+Simulation is deterministic and derived from action parameters.
+
+---
+
+### 6. Chat Interface
+
+Secondary exploration layer.
+
+Functions:
+- explain churn drivers
+- describe segments
+- justify actions
+- surface affected users
+
+Constraints:
+- every response references actual data
+- every response ties back to actions
+- no generic outputs
+
+---
+
+## UI Structure
+
+### Primary View
+
+Top 3 Actions
+↓
+Supporting Metrics
+↓
+Charts
+↓
+Chat Access
+
+## Data Flow
+
+CSV → Parsed Rows
+→ Feature Matrix
+→ Model Training
+→ Predictions
+→ Decision Rules
+→ Action Scoring
+→ Top Actions
+→ Simulation
+→ UI + Chat Context
+
+---
+
+## Decision Examples
+
+Action:
+Convert monthly users to annual contracts
+
+Reasoning:
+
+-   contract type = primary churn driver
+-   monthly users show 3.2x higher churn
+
+Impact:
+-12% churn rate
+
+Affected:
+1,842 users
+
+---
+
+## Constraints
+
+- No dependency on external datasets\
+- Works on arbitrary tabular input\
+- No assumption of domain\
+- All intelligence derived from uploaded data
+
+---
+
+## Execution Model
+
+- client handles ingestion + interaction
+- worker handles model computation
+- API routes coordinate decision + simulation logic
+
+---
+
+## Outcome
+
+Transforms data into:
+- ranked actions
+- quantified impact
+- explainable reasoning
+- immediate next steps
