@@ -1,5 +1,4 @@
-import { ChurnAnalysis, Action, ScoredAction, DecisionEngineResult } from '@/types/decision';
-import { TrainedModel, Dataset } from '@/types';
+import { ChurnAnalysis, Action, ScoredAction, DecisionEngineResult,TrainedModel, Dataset, PredictionDrivenAnalysis, CustomerPrediction, SegmentProfile } from '@/types';
 
 const WEIGHTS = {
   impact: 40,
@@ -7,35 +6,11 @@ const WEIGHTS = {
   coverage: 30,
 };
 
-
-export interface CustomerPrediction {
-  customerId: number;
-  probability: number;
-  riskLevel: 'high' | 'medium' | 'low';
-  topDrivers: { feature: string; contribution: number }[];
-}
-
-export interface PredictionDrivenAnalysis {
-  predictions: CustomerPrediction[];
-  churnAnalysis: ChurnAnalysis;
-  segmentProfiles: SegmentProfile[];
-  featureImpactMap: Map<string, number>;
-}
-
-export interface SegmentProfile {
-  name: string;
-  size: number;
-  avgProbability: number;
-  riskLevel: 'high' | 'medium' | 'low';
-  topFeatures: string[];
-  recommendedActions: string[];
-}
-
 export function runPredictionDrivenAnalysis(
   model: TrainedModel,
   dataset: Dataset
 ): PredictionDrivenAnalysis {
-  const { features, labels, featureNames } = dataset;
+  const { features, featureNames } = dataset;
 
   // Get predictions for each customer
   const predictions = generateCustomerPredictions(model, features, featureNames);
@@ -44,7 +19,7 @@ export function runPredictionDrivenAnalysis(
   const churnAnalysis = analyzeChurnFromPredictions(predictions);
 
   // Create segment profiles
-  const segmentProfiles = createSegmentProfiles(predictions, featureNames);
+  const segmentProfiles = createSegmentProfiles(predictions);
 
   // Map feature impacts
   const featureImpactMap = createFeatureImpactMap(model, featureNames);
@@ -166,8 +141,7 @@ function analyzeChurnFromPredictions(predictions: CustomerPrediction[]): ChurnAn
 }
 
 function createSegmentProfiles(
-  predictions: CustomerPrediction[],
-  featureNames: string[]
+  predictions: CustomerPrediction[]
 ): SegmentProfile[] {
   const segments: SegmentProfile[] = [];
 
@@ -258,12 +232,11 @@ function createFeatureImpactMap(model: TrainedModel, featureNames: string[]): Ma
 export function generatePredictionsBasedDecisions(
   analysis: PredictionDrivenAnalysis
 ): DecisionEngineResult {
-  const { churnAnalysis, segmentProfiles, predictions } = analysis;
+  const { churnAnalysis, predictions } = analysis;
   const actions: Action[] = [];
 
   // High-risk actions
   if (churnAnalysis.highRiskCount > 0) {
-    const highRiskCustomers = predictions.filter(p => p.riskLevel === 'high');
     const topDriver = churnAnalysis.churnRiskDrivers[0];
 
     actions.push({
@@ -381,7 +354,7 @@ export function generatePredictionsBasedDecisions(
   }
 
   // Score and rank actions
-  const scoredActions = scoreActions(actions, churnAnalysis);
+  const scoredActions = scoreActions(actions);
   const top3Actions = scoredActions.slice(0, 3);
 
   return {
@@ -395,7 +368,7 @@ export function generatePredictionsBasedDecisions(
   };
 }
 
-function scoreActions(actions: Action[], churnAnalysis: ChurnAnalysis): ScoredAction[] {
+function scoreActions(actions: Action[]): ScoredAction[] {
   const maxImpact = Math.max(...actions.map(a => Math.abs(a.expectedImpact.delta)));
   const maxCoverage = Math.max(...actions.map(a => a.affectedUsers));
 

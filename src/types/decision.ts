@@ -48,3 +48,26 @@ export interface BaselineMetrics {
   LTV: number;
   conversionRate: number;
 }
+
+export interface PredictionDrivenAnalysis {
+  predictions: CustomerPrediction[];
+  churnAnalysis: ChurnAnalysis;
+  segmentProfiles: SegmentProfile[];
+  featureImpactMap: Map<string, number>;
+}
+
+export interface CustomerPrediction {
+  customerId: number;
+  probability: number;
+  riskLevel: 'high' | 'medium' | 'low';
+  topDrivers: { feature: string; contribution: number }[];
+}
+
+export interface SegmentProfile {
+  name: string;
+  size: number;
+  avgProbability: number;
+  riskLevel: 'high' | 'medium' | 'low';
+  topFeatures: string[];
+  recommendedActions: string[];
+}

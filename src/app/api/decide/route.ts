@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { DecisionEngineResult, ChurnAnalysis } from '@/types/decision';
+import { DecisionEngineResult, ChurnAnalysis,Action,ScoredAction } from '@/types';
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { probabilities, riskLevels } = predictions;
+    const { probabilities } = predictions;
 
     // Build churn analysis from predictions
     const churnAnalysis: ChurnAnalysis = {
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     };
 
     // Generate decisions based on predictions
-    const decisions = generateDecisions(churnAnalysis, probabilities, featureNames || []);
+    const decisions = generateDecisions(churnAnalysis, probabilities);
 
     return NextResponse.json({
       success: true,
@@ -67,34 +67,9 @@ const WEIGHTS = {
   coverage: 30,
 };
 
-interface Action {
-  id: string;
-  title: string;
-  description: string;
-  expectedImpact: {
-    delta: number;
-    metric: 'churn_rate' | 'LTV' | 'conversion_rate' | 'retention';
-    confidence: number;
-  };
-  affectedUsers: number;
-  affectedPercentage: number;
-  reasoning: string[];
-  category: 'retention' | 'contract' | 'engagement' | 'pricing' | 'segment';
-}
-
-interface ScoredAction extends Action {
-  score: number;
-  breakdown: {
-    impact: number;
-    confidence: number;
-    coverage: number;
-  };
-}
-
 function generateDecisions(
   churnAnalysis: ChurnAnalysis,
-  probabilities: number[],
-  featureNames: string[]
+  probabilities: number[]
 ): DecisionEngineResult {
   const actions: Action[] = [];
   const total = probabilities.length;
@@ -231,7 +206,7 @@ function generateDecisions(
   }
 
   // Score and rank
-  const scoredActions = scoreActions(actions, churnAnalysis);
+  const scoredActions = scoreActions(actions);
 
   return {
     actions: scoredActions,
@@ -244,7 +219,7 @@ function generateDecisions(
   };
 }
 
-function scoreActions(actions: Action[], churnAnalysis: ChurnAnalysis): ScoredAction[] {
+function scoreActions(actions: Action[]): ScoredAction[] {
   const maxImpact = Math.max(...actions.map(a => Math.abs(a.expectedImpact.delta)));
   const maxCoverage = Math.max(...actions.map(a => a.affectedUsers));
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { UploadResult, TrainingResult, DecisionEngineResult, ChurnAnalysis, Action, BaselineMetrics } from '@/types';
+import { UploadResult, TrainingResult, DecisionEngineResult, ChurnAnalysis, Action, BaselineMetrics, PredictionResult } from '@/types';
 import { ModelCharts } from '@/components/ModelCharts';
 import { DatasetCharts } from '@/components/DatasetCharts';
 import { Decisions, SimulationModal } from '@/components/decisions';
@@ -13,22 +13,6 @@ interface BestModel {
   evaluation: { accuracy: number; f1: number; precision: number; recall: number };
   weights?: number[];
   featureImportances?: number[];
-}
-
-interface PredictionResult {
-  probabilities: number[];
-  predictions: number[];
-  riskLevels: ('high' | 'medium' | 'low')[];
-  summary: {
-    total: number;
-    highRisk: number;
-    mediumRisk: number;
-    lowRisk: number;
-    highRiskPercent: number;
-    mediumRiskPercent: number;
-    lowRiskPercent: number;
-    avgProbability: number;
-  };
 }
 
 export default function Home() {
