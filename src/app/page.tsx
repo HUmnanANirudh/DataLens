@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { UploadResult } from '@/types';
+import { ModelCharts } from '@/components/ModelCharts';
+import { DatasetCharts } from '@/components/DatasetCharts';
 
 interface ModelResult {
   name: string;
@@ -211,6 +213,9 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Dataset Visualization Charts */}
+          <DatasetCharts uploadResult={uploadResult} />
+
           {/* Training Section */}
           <div className="bg-white/10 border rounded-lg p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">Model Training</h2>
@@ -287,6 +292,14 @@ export default function Home() {
                       <span className="font-mono">F1: {(model.f1 * 100).toFixed(2)}%</span>
                     </div>
                   ))}
+                </div>
+
+                {/* Charts */}
+                <div className="mt-6">
+                  <ModelCharts
+                    trainingResult={trainingResult}
+                    columns={uploadResult.columns}
+                  />
                 </div>
               </div>
             )}
