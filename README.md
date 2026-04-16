@@ -13,21 +13,16 @@ The system does not stop at analysis. It produces decisions.
 
 ## Architecture
 
-CSV Upload
-      ↓
-Feature Engine
-      ↓
-Model Training (multi-model)
-      ↓
-Model Selection (best F1 score)
-      ↓
-Decision Engine (action generation + scoring)
-      ↓
-Top 3 Actions (primary output)
-      ↓
-Simulation Engine (before/after impact)
-      ↓
-Chat Interface (data-grounded exploration)
+| Stage | Description |
+|------|------------|
+| CSV Upload | Ingest raw dataset |
+| Feature Engineering | Clean + type inference |
+| Model Training | Train multiple models |
+| Model Selection | Choose best via F1 score |
+| Decision Engine | Generate + score actions |
+| Top Actions | Return top 3 recommendations |
+| Simulation | Evaluate impact of actions |
+| Chat Interface | Interactive querying |
 
 ---
 
