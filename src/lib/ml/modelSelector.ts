@@ -7,7 +7,6 @@ import { trainBagging } from './bagging';
 
 export function trainAllModels(
   dataset: Dataset,
-  targetColumn: string
 ): ModelSelectionResult {
   // Split data
   const { train, test } = trainTestSplit(dataset, 0.2);

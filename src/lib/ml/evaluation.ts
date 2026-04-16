@@ -1,4 +1,4 @@
-import { ModelEvaluation } from '@/types/ml';
+import { ModelEvaluation } from '@/types';
 
 export function evaluateModel(predictions: number[], labels: number[]): ModelEvaluation {
   const tp = countMatches(predictions, labels, 1, 1);

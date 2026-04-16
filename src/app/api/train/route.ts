@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Train all models and select best
-    const result = trainAllModels(dataset, targetColumn);
+    const result = trainAllModels(dataset);
 
     return NextResponse.json({
       success: true,

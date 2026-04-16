@@ -1,4 +1,4 @@
-import { Dataset, TrainedModel, DecisionTree } from '@/types/ml';
+import { Dataset, TrainedModel, DecisionTree } from '@/types';
 import { evaluateModel, predictByThreshold } from './evaluation';
 
 export function trainRandomForest(

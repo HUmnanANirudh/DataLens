@@ -1,4 +1,4 @@
-import { Dataset, TrainedModel, DecisionTree } from '@/types/ml';
+import { Dataset, TrainedModel, DecisionTree } from '@/types';
 import { evaluateModel, predictByThreshold } from './evaluation';
 
 interface XGBoostTree {
@@ -17,7 +17,7 @@ export function trainXGBoost(
   const trees: XGBoostTree[] = [];
 
   // Initial prediction (log-odds for class 1)
-  let currentPredictions = new Array(features.length).fill(0);
+  const currentPredictions = new Array(features.length).fill(0);
 
   for (let i = 0; i < numTrees; i++) {
     // Compute pseudo-residuals (gradient)
@@ -215,7 +215,7 @@ function computeLeafValuesRecursive(
   leafValues: Map<number, number>
 ): void {
   if (tree.featureIndex === -1) {
-    const leafId = getLeafId(tree);
+    const leafId = getLeafId();
     leafValues.set(leafId, residuals.reduce((a, b) => a + b, 0) / (residuals.length + 1));
     return;
   }
@@ -243,7 +243,7 @@ function computeLeafValuesRecursive(
 
 let leafCounter = 0;
 
-function getLeafId(tree: DecisionTree): number {
+function getLeafId(): number {
   return leafCounter++;
 }
 
@@ -262,7 +262,7 @@ function predictTreeValue(
   leafWeights: Map<number, number>
 ): number {
   if (tree.featureIndex === -1) {
-    return leafWeights.get(getLeafId(tree)) || 0;
+    return leafWeights.get(getLeafId()) || 0;
   }
 
   if (features[tree.featureIndex] <= tree.threshold) {

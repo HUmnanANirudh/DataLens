@@ -1,4 +1,4 @@
-import { Dataset } from '@/types/ml';
+import { Dataset } from '@/types';
 
 interface EncodingMaps {
   [column: string]: { [value: string]: number };

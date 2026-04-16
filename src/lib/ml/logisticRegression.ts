@@ -15,7 +15,7 @@ export function trainLogisticRegression(
   const numSamples = features.length;
 
   // Initialize weights to zeros
-  let weights = new Array(numFeatures).fill(0);
+  const weights = new Array(numFeatures).fill(0);
   let bias = 0;
 
   // Hyperparameters
