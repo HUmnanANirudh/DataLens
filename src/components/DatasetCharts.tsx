@@ -1,5 +1,3 @@
-'use client';
-
 import { ColumnAnalysis } from '@/types';
 import { BarChart, PieChart, AreaChart } from './charts';
 
@@ -35,14 +33,6 @@ export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
     name: col.name.length > 15 ? col.name.slice(0, 15) + '...' : col.name,
     value: col.uniqueValues,
   }));
-
-  // Null Values per Column - Bar Chart
-  const nullValuesData = columnAnalysis
-    .filter((col) => col.nullCount > 0)
-    .map((col) => ({
-      name: col.name.length > 15 ? col.name.slice(0, 15) + '...' : col.name,
-      value: col.nullCount,
-    }));
 
   // Numeric columns for distribution
   const numericColumns = columnAnalysis.filter((col) => col.type === 'numeric');
@@ -111,21 +101,6 @@ export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
           fill="#3B82F6"
         />
       </div>
-
-      {/* Null Values per Column */}
-      {nullValuesData.length > 0 && (
-        <div className="bg-white/10 border rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-4">Null/Empty Values per Column</h3>
-          <BarChart
-            data={nullValuesData}
-            dataKey="value"
-            nameKey="name"
-            layout="vertical"
-            fill="#EF4444"
-          />
-        </div>
-      )}
-
       {/* Numeric Distribution */}
       {areaChartData.length > 0 && (
         <div className="bg-white/10 border rounded-lg p-6">
@@ -158,31 +133,6 @@ export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
           </div>
         </div>
       )}
-
-      {/* Data Quality Summary */}
-      <div className="bg-white/10 border rounded-lg p-6">
-        <h3 className="text-lg font-semibold mb-4">Data Quality Summary</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-blue-500/20 rounded-lg p-4 text-center">
-            <p className="text-3xl font-bold text-blue-400">{uploadResult.rowCount.toLocaleString()}</p>
-            <p className="text-sm text-gray-400">Total Rows</p>
-          </div>
-          <div className="bg-green-500/20 rounded-lg p-4 text-center">
-            <p className="text-3xl font-bold text-green-400">{uploadResult.cleanedRowCount.toLocaleString()}</p>
-            <p className="text-sm text-gray-400">Clean Rows</p>
-          </div>
-          <div className="bg-purple-500/20 rounded-lg p-4 text-center">
-            <p className="text-3xl font-bold text-purple-400">{columnAnalysis.length}</p>
-            <p className="text-sm text-gray-400">Features</p>
-          </div>
-          <div className="bg-red-500/20 rounded-lg p-4 text-center">
-            <p className="text-3xl font-bold text-red-400">
-              {columnAnalysis.reduce((sum, c) => sum + c.nullCount, 0)}
-            </p>
-            <p className="text-sm text-gray-400">Total Nulls</p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

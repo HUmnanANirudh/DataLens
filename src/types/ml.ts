@@ -44,3 +44,22 @@ export type TrainRequest = {
   columns: string[];
   targetColumn: string;
 };
+
+export interface ModelResult {
+  name: string;
+  type: string;
+  evaluation: ModelEvaluation;
+  featureImportances?: number[];
+}
+
+export interface TrainingResult {
+  success: boolean;
+  leaderboard: { name: string; f1: number }[];
+  bestModel: ModelResult;
+  totalModels: number;
+}
+
+export interface ModelChartsProps {
+  trainingResult: TrainingResult;
+  columns: string[];
+}

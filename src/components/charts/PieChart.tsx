@@ -8,14 +8,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-interface PieChartProps {
-  data: Record<string, unknown>[];
-  dataKey: string;
-  nameKey?: string;
-  colors?: string[];
-  height?: number;
-  showLabels?: boolean;
-}
+import { PieChartProps } from '@/types';
 
 const DEFAULT_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444', '#06B6D4'];
 

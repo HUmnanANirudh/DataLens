@@ -10,19 +10,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-interface BarChartProps {
-  data: Record<string, unknown>[];
-  dataKey: string;
-  nameKey?: string;
-  layout?: 'horizontal' | 'vertical';
-  fill?: string;
-  height?: number;
-  domain?: [number, number] | [number, 'auto'];
-  formatter?: (value: number) => string;
-  showGrid?: boolean;
-  showXAxis?: boolean;
-  showYAxis?: boolean;
-}
+import { BarChartProps } from '@/types';
 
 export function BarChart({
   data,

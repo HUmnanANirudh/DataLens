@@ -1,32 +1,5 @@
-'use client';
-
 import { BarChart } from './charts';
-
-interface ModelEvaluation {
-  accuracy: number;
-  f1: number;
-  precision: number;
-  recall: number;
-}
-
-interface ModelResult {
-  name: string;
-  type: string;
-  evaluation: ModelEvaluation;
-  featureImportances?: number[];
-}
-
-interface TrainingResult {
-  success: boolean;
-  leaderboard: { name: string; f1: number }[];
-  bestModel: ModelResult;
-  totalModels: number;
-}
-
-interface ModelChartsProps {
-  trainingResult: TrainingResult;
-  columns: string[];
-}
+import { ModelChartsProps } from '@/types';
 
 export function ModelCharts({ trainingResult, columns }: ModelChartsProps) {
   const { leaderboard, bestModel } = trainingResult;

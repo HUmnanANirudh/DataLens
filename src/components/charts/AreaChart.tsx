@@ -9,15 +9,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-
-interface AreaChartProps {
-  data: Record<string, unknown>[];
-  areas: { dataKey: string; stroke?: string; fill?: string }[];
-  xAxisKey?: string;
-  height?: number;
-  showGrid?: boolean;
-  fillOpacity?: number;
-}
+import { AreaChartProps } from '@/types';
 
 const DEFAULT_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444'];
 
