@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Papa from 'papaparse';
+import { analyzeColumns } from '@/lib/preprocess';
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,12 +22,19 @@ export async function POST(req: NextRequest) {
         skipEmptyLines: true,
         complete: (results) => {
           const columns = results.meta.fields || [];
-          const preview = results.data.slice(0, 5);
+          const rawData = results.data as Record<string, string>[];
+
+          const analysis = analyzeColumns(columns, rawData);
 
           resolve(NextResponse.json({
-            columns,
-            rowCount: results.data.length,
-            preview,
+            originalColumns: columns,
+            columns: analysis.cleanedColumns,
+            rowCount: rawData.length,
+            cleanedRowCount: analysis.cleanedData.length,
+            preview: rawData.slice(0, 5),
+            cleanedPreview: analysis.cleanedData.slice(0, 5),
+            columnAnalysis: analysis.columnAnalysis,
+            droppedColumns: analysis.droppedColumns,
           }));
         },
         error: (error: Error) => {
