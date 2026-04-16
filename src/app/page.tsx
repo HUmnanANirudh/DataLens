@@ -1,29 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { UploadResult, DecisionEngineResult, ChurnAnalysis, Action } from '@/types';
+import { UploadResult,ModelResult,TrainingResult, DecisionEngineResult, ChurnAnalysis, Action } from '@/types';
 import { ModelCharts } from '@/components/ModelCharts';
 import { DatasetCharts } from '@/components/DatasetCharts';
 import { Decisions } from '@/components/decisions';
-
-interface ModelResult {
-  name: string;
-  type: string;
-  evaluation: {
-    accuracy: number;
-    f1: number;
-    precision: number;
-    recall: number;
-  };
-  featureImportances?: number[];
-}
-
-interface TrainingResult {
-  success: boolean;
-  leaderboard: { name: string; f1: number }[];
-  bestModel: ModelResult;
-  totalModels: number;
-}
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);

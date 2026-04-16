@@ -19,9 +19,8 @@ export function Decisions({ decisions, churnAnalysis, onSimulate }: DecisionsPro
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/50 rounded-xl p-6">
+      <div className="bg-linear-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/50 rounded-xl p-6">
         <div className="flex items-center gap-3 mb-2">
-          <span className="text-3xl">🎯</span>
           <h2 className="text-2xl font-bold">Top 3 Recommended Actions</h2>
         </div>
         <p className="text-gray-300">Ranked by impact, confidence, and coverage</p>
