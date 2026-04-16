@@ -14,19 +14,19 @@ The system does not stop at analysis. It produces decisions.
 ## Architecture
 
 CSV Upload
-↓
+      ↓
 Feature Engine
-↓
+      ↓
 Model Training (multi-model)
-↓
+      ↓
 Model Selection (best F1 score)
-↓
+      ↓
 Decision Engine (action generation + scoring)
-↓
+      ↓
 Top 3 Actions (primary output)
-↓
+      ↓
 Simulation Engine (before/after impact)
-↓
+      ↓
 Chat Interface (data-grounded exploration)
 
 ---
@@ -49,8 +49,8 @@ Chat Interface (data-grounded exploration)
 
 Multiple models trained in parallel:
 
-- Logistic Regression\
-- Random Forest\
+- Logistic Regression
+- Random Forest
 - Gradient Boosting / XGBoost (or equivalent)
 
 Evaluation metrics:
@@ -69,7 +69,7 @@ Only the selected model is used downstream.
 
 Transforms model outputs into actions.
 
-#### Input:\
+#### Input:
 - churn probabilities
 - segment assignments
 - feature importance
@@ -91,9 +91,10 @@ Each action is ranked using:
 
 score = impact_weight * expected_lift
 
--   confidence_weight * model_confidence
--   coverage_weight * affected_users
--   cost_penalty
+- confidence_weight * model_confidence
+- coverage_weight * affected_users
+- cost_penalty
+
 Breakdown:
 - Impact: magnitude of change (e.g. churn reduction)
 - Confidence: model certainty
@@ -109,8 +110,8 @@ Top 3 actions are selected.
 Applies action effects to baseline metrics.
 
 before → after
-Example:
 
+Example:
 Churn Rate: 18.2% → 15.0%
 At-risk Users: 184 → 127
 Simulation is deterministic and derived from action parameters.
@@ -134,18 +135,6 @@ Constraints:
 
 ---
 
-## UI Structure
-
-### Primary View
-
-Top 3 Actions
-↓
-Supporting Metrics
-↓
-Charts
-↓
-Chat Access
-
 ## Data Flow
 
 CSV → Parsed Rows
@@ -167,8 +156,8 @@ Convert monthly users to annual contracts
 
 Reasoning:
 
--   contract type = primary churn driver
--   monthly users show 3.2x higher churn
+- contract type = primary churn driver
+- monthly users show 3.2x higher churn
 
 Impact:
 -12% churn rate
