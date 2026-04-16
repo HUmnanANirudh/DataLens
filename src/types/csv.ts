@@ -21,6 +21,7 @@ export interface UploadResult {
   cleanedRowCount: number;
   preview: Record<string, string>[];
   cleanedPreview: Record<string, string>[];
+  cleanedData: Record<string, string>[];
   columnAnalysis: ColumnAnalysis[];
   droppedColumns: { name: string; reason: string }[];
 }

@@ -2,7 +2,8 @@ import { ColumnAnalysis, PreprocessResult } from '@/types';
 
 export function analyzeColumns(
   columns: string[],
-  data: Record<string, string>[]
+  data: Record<string, string>[],
+  targetColumn?: string
 ): PreprocessResult {
   const droppedColumns: { name: string; reason: string }[] = [];
   const columnAnalysis: ColumnAnalysis[] = [];
@@ -54,8 +55,13 @@ export function analyzeColumns(
 
     cleanedColumns.push(col);
   }
+
+  // Filter rows: keep only rows where at least one cleaned column has data
+  // AND if targetColumn is specified, that column must have data
   const cleanedData = data.filter((row) => {
-    return cleanedColumns.some((col) => row[col]?.trim() !== '');
+    const hasData = cleanedColumns.some((col) => row[col]?.trim() !== '');
+    const hasTarget = !targetColumn || row[targetColumn]?.trim() !== '';
+    return hasData && hasTarget;
   });
 
   return {

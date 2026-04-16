@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
     const text = await file.text();
 
-    return new Promise((resolve) => {
+    return new Promise<Response>((resolve) => {
       Papa.parse(text, {
         header: true,
         skipEmptyLines: true,
@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
             cleanedRowCount: analysis.cleanedData.length,
             preview: rawData.slice(0, 5),
             cleanedPreview: analysis.cleanedData.slice(0, 5),
+            cleanedData: analysis.cleanedData, // Full dataset for training
             columnAnalysis: analysis.columnAnalysis,
             droppedColumns: analysis.droppedColumns,
           }));
