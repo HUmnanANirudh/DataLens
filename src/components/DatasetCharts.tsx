@@ -1,17 +1,5 @@
-import { ColumnAnalysis } from '@/types';
+import { DatasetChartsProps } from '@/types';
 import { BarChart, PieChart, AreaChart } from './charts';
-
-interface UploadResult {
-  columns: string[];
-  rowCount: number;
-  cleanedRowCount: number;
-  columnAnalysis: ColumnAnalysis[];
-  cleanedPreview: Record<string, string>[];
-}
-
-interface DatasetChartsProps {
-  uploadResult: UploadResult;
-}
 
 export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
   const { columnAnalysis, cleanedPreview } = uploadResult;
