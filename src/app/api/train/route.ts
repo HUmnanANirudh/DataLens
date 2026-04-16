@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prepareDataset} from '@/lib/ml/featureEngineering';
+import { prepareDataset } from '@/lib/ml/featureEngineering';
 import { trainAllModels } from '@/lib/ml/modelSelector';
 import { TrainRequest } from '@/types';
 
@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
     // Train all models and select best
     const result = trainAllModels(dataset);
 
+    // Return best model with all data needed for inference
     return NextResponse.json({
       success: true,
       leaderboard: result.leaderboard,
@@ -35,9 +36,13 @@ export async function POST(req: NextRequest) {
         name: result.bestModel.config.name,
         type: result.bestModel.config.type,
         evaluation: result.bestModel.evaluation,
+        // Model data for inference
+        weights: result.bestModel.weights,
         featureImportances: result.bestModel.featureImportances,
       },
       totalModels: result.allModels.length,
+      // Feature info for decisions
+      featureNames: dataset.featureNames,
     });
   } catch (error) {
     console.error('Training error:', error);

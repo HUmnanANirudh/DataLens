@@ -1,11 +1,35 @@
 'use client';
 
 import { useState } from 'react';
-import { UploadResult, ModelResult, TrainingResult, DecisionEngineResult, ChurnAnalysis, Action, BaselineMetrics } from '@/types';
+import { UploadResult, TrainingResult, DecisionEngineResult, ChurnAnalysis, Action, BaselineMetrics } from '@/types';
 import { ModelCharts } from '@/components/ModelCharts';
 import { DatasetCharts } from '@/components/DatasetCharts';
 import { Decisions, SimulationModal } from '@/components/decisions';
 import { calculateBaseline } from '@/lib/decisions/simulation';
+
+interface BestModel {
+  name: string;
+  type: string;
+  evaluation: { accuracy: number; f1: number; precision: number; recall: number };
+  weights?: number[];
+  featureImportances?: number[];
+}
+
+interface PredictionResult {
+  probabilities: number[];
+  predictions: number[];
+  riskLevels: ('high' | 'medium' | 'low')[];
+  summary: {
+    total: number;
+    highRisk: number;
+    mediumRisk: number;
+    lowRisk: number;
+    highRiskPercent: number;
+    mediumRiskPercent: number;
+    lowRiskPercent: number;
+    avgProbability: number;
+  };
+}
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -15,8 +39,12 @@ export default function Home() {
 
   // Training state
   const [targetColumn, setTargetColumn] = useState<string>('');
-  const [trainingResult, setTrainingResult] = useState<TrainingResult | null>(null);
+  const [trainingResult, setTrainingResult] = useState<TrainingResult & { bestModel: BestModel; featureNames?: string[] } | null>(null);
   const [training, setTraining] = useState(false);
+
+  // Prediction state
+  const [predictionResult, setPredictionResult] = useState<PredictionResult | null>(null);
+  const [predicting, setPredicting] = useState(false);
 
   // Decisions state
   const [decisions, setDecisions] = useState<DecisionEngineResult | null>(null);
@@ -33,6 +61,7 @@ export default function Home() {
     setLoading(true);
     setError(null);
     setTrainingResult(null);
+    setPredictionResult(null);
     setDecisions(null);
     setChurnAnalysis(null);
 
@@ -68,6 +97,7 @@ export default function Home() {
 
     setTraining(true);
     setError(null);
+    setPredictionResult(null);
     setDecisions(null);
     setChurnAnalysis(null);
 
@@ -89,7 +119,9 @@ export default function Home() {
       }
 
       setTrainingResult(data);
-      await handleDecide(data.bestModel);
+
+      // Automatically run prediction
+      await handlePredict(data.bestModel, data.featureNames);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Training failed');
     } finally {
@@ -97,9 +129,48 @@ export default function Home() {
     }
   };
 
-  const handleDecide = async (bestModel: ModelResult) => {
+  const handlePredict = async (bestModel: BestModel, featureNames?: string[]) => {
     if (!uploadResult || !targetColumn) return;
 
+    setPredicting(true);
+
+    try {
+      const res = await fetch('/api/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          data: uploadResult.cleanedData,
+          columns: uploadResult.columns,
+          targetColumn,
+          modelType: bestModel.type,
+          weights: bestModel.weights,
+          featureImportances: bestModel.featureImportances,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Prediction failed');
+      }
+
+      setPredictionResult(data.predictions);
+
+      // Automatically run decision engine with both predictions and summary
+      await handleDecide(data.predictions, data.summary, bestModel.featureImportances, featureNames || uploadResult.columns);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Prediction failed');
+    } finally {
+      setPredicting(false);
+    }
+  };
+
+  const handleDecide = async (
+    predictions: PredictionResult,
+    summary: PredictionResult['summary'],
+    featureImportances?: number[],
+    featureNames?: string[]
+  ) => {
     setDeciding(true);
 
     try {
@@ -107,12 +178,10 @@ export default function Home() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          data: uploadResult.cleanedData,
-          columns: uploadResult.columns,
-          targetColumn,
-          modelWeights: bestModel.type === 'logistic_regression' ? bestModel.featureImportances : undefined,
-          modelType: bestModel.type,
-          featureImportances: bestModel.featureImportances,
+          predictions,
+          summary,
+          featureImportances: featureImportances || trainingResult?.bestModel.featureImportances,
+          featureNames: featureNames || trainingResult?.featureNames,
         }),
       });
 
@@ -125,10 +194,10 @@ export default function Home() {
       setChurnAnalysis(data.churnAnalysis);
       setDecisions(data.decisions);
 
-      // Calculate baseline metrics for simulation
+      // Calculate baseline for simulation
       const baselineMetrics = calculateBaseline(
         data.churnAnalysis,
-        uploadResult.cleanedRowCount
+        uploadResult?.cleanedRowCount || 0
       );
       setBaseline(baselineMetrics);
     } catch (err) {
@@ -145,6 +214,8 @@ export default function Home() {
   const closeSimulation = () => {
     setSelectedAction(null);
   };
+
+  const isProcessing = loading || training || predicting || deciding;
 
   return (
     <div className="min-h-screen p-8 max-w-6xl mx-auto">
@@ -173,6 +244,20 @@ export default function Home() {
         </div>
       )}
 
+      {/* Processing Status */}
+      {isProcessing && (
+        <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+            <span className="text-blue-300">
+              {training && 'Training models...'}
+              {predicting && 'Running predictions...'}
+              {deciding && 'Generating decisions...'}
+            </span>
+          </div>
+        </div>
+      )}
+
       {uploadResult && (
         <>
           {/* Dropped Columns Alert */}
@@ -198,67 +283,24 @@ export default function Home() {
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-blue-500 p-4 rounded">
-              <p className="text-sm text-gray-600">Original Columns</p>
-              <p className="text-2xl font-bold">{uploadResult.originalColumns.length}</p>
-            </div>
-            <div className="bg-green-500 p-4 rounded">
-              <p className="text-sm text-gray-600">Cleaned Columns</p>
+              <p className="text-sm text-gray-600">Columns</p>
               <p className="text-2xl font-bold">{uploadResult.columns.length}</p>
             </div>
-            <div className="bg-blue-500 p-4 rounded">
-              <p className="text-sm text-gray-600">Total Rows</p>
-              <p className="text-2xl font-bold">{uploadResult.rowCount.toLocaleString()}</p>
-            </div>
             <div className="bg-green-500 p-4 rounded">
-              <p className="text-sm text-gray-600">Cleaned Rows</p>
+              <p className="text-sm text-gray-600">Clean Rows</p>
               <p className="text-2xl font-bold">{uploadResult.cleanedRowCount.toLocaleString()}</p>
             </div>
-          </div>
-
-          {/* Column Analysis */}
-          <div className="bg-white/10 border rounded-lg p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Column Analysis</h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead>
-                  <tr>
-                    <th className="text-left py-2 px-3">Column</th>
-                    <th className="text-left py-2 px-3">Type</th>
-                    <th className="text-right py-2 px-3">Unique</th>
-                    <th className="text-right py-2 px-3">Nulls</th>
-                    <th className="text-left py-2 px-3">Sample</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {uploadResult.columnAnalysis.map((col: { name: string; type: string; uniqueValues: number; nullCount: number; sample: string[] }) => (
-                    <tr key={col.name} className="border-t border-white/10">
-                      <td className="py-2 px-3 font-mono">{col.name}</td>
-                      <td className="py-2 px-3">
-                        <span
-                          className={`px-2 py-0.5 rounded text-xs ${
-                            col.type === 'numeric'
-                              ? 'bg-blue-500/30 text-blue-300'
-                              : col.type === 'date'
-                              ? 'bg-purple-500/30 text-purple-300'
-                              : 'bg-gray-500/30 text-gray-300'
-                          }`}
-                        >
-                          {col.type}
-                        </span>
-                      </td>
-                      <td className="py-2 px-3 text-right">{col.uniqueValues.toLocaleString()}</td>
-                      <td className="py-2 px-3 text-right">{col.nullCount.toLocaleString()}</td>
-                      <td className="py-2 px-3 font-mono text-xs text-gray-400">
-                        {col.sample.slice(0, 3).join(', ')}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="bg-purple-500 p-4 rounded">
+              <p className="text-sm text-gray-600">Prediction Status</p>
+              <p className="text-2xl font-bold">{predictionResult ? 'Ready' : 'Pending'}</p>
+            </div>
+            <div className="bg-yellow-500 p-4 rounded">
+              <p className="text-sm text-gray-600">Actions</p>
+              <p className="text-2xl font-bold">{decisions ? 'Generated' : 'Pending'}</p>
             </div>
           </div>
 
-          {/* Dataset Visualization Charts */}
+          {/* Dataset Charts */}
           <DatasetCharts uploadResult={uploadResult} />
 
           {/* Training Section */}
@@ -272,25 +314,23 @@ export default function Home() {
                 onChange={(e) => setTargetColumn(e.target.value)}
                 className="px-4 py-2 bg-gray-800 border border-gray-600 rounded text-white"
               >
-                <option value="">Select target column</option>
+                <option value="">Select target</option>
                 {uploadResult.columns.map((col: string) => (
-                  <option key={col} value={col}>
-                    {col}
-                  </option>
+                  <option key={col} value={col}>{col}</option>
                 ))}
               </select>
 
               <button
                 onClick={handleTrain}
-                disabled={!targetColumn || training}
+                disabled={!targetColumn || isProcessing}
                 className="px-6 py-2 bg-green-500 text-white rounded disabled:bg-gray-300"
               >
-                {training ? 'Training...' : 'Train & Generate Actions'}
+                {isProcessing ? 'Processing...' : 'Train & Predict'}
               </button>
             </div>
 
             {trainingResult && (
-              <div>
+              <>
                 {/* Best Model */}
                 <div className="bg-green-500/20 border border-green-500 rounded-lg p-4 mb-6">
                   <h3 className="font-semibold text-green-400 mb-2">
@@ -316,59 +356,57 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Leaderboard */}
-                <h4 className="font-semibold mb-3">Model Leaderboard</h4>
-                <div className="space-y-2">
-                  {trainingResult.leaderboard.map((model, idx) => (
-                    <div
-                      key={model.name}
-                      className={`flex items-center justify-between p-3 rounded ${
-                        idx === 0 ? 'bg-yellow-500/20 border border-yellow-500' : 'bg-gray-800/50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-sm ${
-                          idx === 0 ? 'bg-yellow-500 text-black' : 'bg-gray-600'
-                        }`}>
-                          {idx + 1}
-                        </span>
-                        <span>{model.name}</span>
-                      </div>
-                      <span className="font-mono">F1: {(model.f1 * 100).toFixed(2)}%</span>
-                    </div>
-                  ))}
-                </div>
-
                 {/* Charts */}
-                <div className="mt-6">
-                  <ModelCharts
-                    trainingResult={trainingResult}
-                    columns={uploadResult.columns}
-                  />
-                </div>
-              </div>
+                <ModelCharts
+                  trainingResult={trainingResult}
+                  columns={uploadResult.columns}
+                />
+              </>
             )}
           </div>
 
-          {/* Decisions Section */}
-          {(decisions || deciding) && (
-            <div className="bg-white/5 border border-yellow-500/30 rounded-xl p-6">
-              {deciding ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin w-8 h-8 border-2 border-yellow-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-                  <p className="text-gray-400">Generating decisions...</p>
+          {/* Prediction Summary */}
+          {predictionResult && (
+            <div className="bg-white/10 border rounded-lg p-6 mb-6">
+              <h2 className="text-xl font-semibold mb-4">Prediction Analysis</h2>
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
+                <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-red-400">{predictionResult.summary.highRisk}</p>
+                  <p className="text-xs text-gray-400">High Risk</p>
+                  <p className="text-xs text-red-300">{predictionResult.summary.highRiskPercent.toFixed(1)}%</p>
                 </div>
-              ) : (
-                <Decisions
-                  decisions={decisions}
-                  churnAnalysis={churnAnalysis}
-                  onSimulate={handleSimulate}
-                />
-              )}
+                <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-yellow-400">{predictionResult.summary.mediumRisk}</p>
+                  <p className="text-xs text-gray-400">Medium Risk</p>
+                  <p className="text-xs text-yellow-300">{predictionResult.summary.mediumRiskPercent.toFixed(1)}%</p>
+                </div>
+                <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-green-400">{predictionResult.summary.lowRisk}</p>
+                  <p className="text-xs text-gray-400">Low Risk</p>
+                  <p className="text-xs text-green-300">{predictionResult.summary.lowRiskPercent.toFixed(1)}%</p>
+                </div>
+                <div className="bg-blue-500/20 border border-blue-500/50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-blue-400">{(predictionResult.summary.avgProbability * 100).toFixed(1)}%</p>
+                  <p className="text-xs text-gray-400">Avg Probability</p>
+                </div>
+                <div className="bg-purple-500/20 border border-purple-500/50 rounded-lg p-3 text-center col-span-2">
+                  <p className="text-2xl font-bold text-purple-400">{predictionResult.summary.total.toLocaleString()}</p>
+                  <p className="text-xs text-gray-400">Total Customers</p>
+                </div>
+              </div>
             </div>
           )}
 
-          {/* Cleaned Data Preview */}
+          {/* Decisions Section - TOP PRIORITY */}
+          {decisions && churnAnalysis && (
+            <Decisions
+              decisions={decisions}
+              churnAnalysis={churnAnalysis}
+              onSimulate={handleSimulate}
+            />
+          )}
+
+          {/* Data Preview */}
           <div className="bg-white/10 border rounded-lg p-6 mt-8">
             <h2 className="text-xl font-semibold mb-4">Cleaned Data Preview</h2>
             <div className="overflow-x-auto">
@@ -376,19 +414,15 @@ export default function Home() {
                 <thead>
                   <tr>
                     {uploadResult.columns.map((col: string) => (
-                      <th key={col} className="border px-4 py-2 text-left text-sm">
-                        {col}
-                      </th>
+                      <th key={col} className="border px-4 py-2 text-left text-sm">{col}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {uploadResult.cleanedPreview.map((row: Record<string, string>, i: number) => (
+                  {uploadResult.cleanedPreview.slice(0, 5).map((row: Record<string, string>, i: number) => (
                     <tr key={i}>
                       {uploadResult.columns.map((col: string) => (
-                        <td key={col} className="border px-4 py-2 text-sm">
-                          {row[col]}
-                        </td>
+                        <td key={col} className="border px-4 py-2 text-sm">{row[col]}</td>
                       ))}
                     </tr>
                   ))}
