@@ -40,3 +40,11 @@ export interface ChurnAnalysis {
   lowRiskCount: number;
   churnRiskDrivers: { feature: string; importance: number }[];
 }
+
+export interface BaselineMetrics {
+  churnRate: number;
+  atRiskCustomers: number;
+  totalCustomers: number;
+  LTV: number;
+  conversionRate: number;
+}

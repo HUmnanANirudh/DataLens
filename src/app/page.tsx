@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { UploadResult,ModelResult,TrainingResult, DecisionEngineResult, ChurnAnalysis, Action } from '@/types';
+import { UploadResult, ModelResult, TrainingResult, DecisionEngineResult, ChurnAnalysis, Action, BaselineMetrics } from '@/types';
 import { ModelCharts } from '@/components/ModelCharts';
 import { DatasetCharts } from '@/components/DatasetCharts';
-import { Decisions } from '@/components/decisions';
+import { Decisions, SimulationModal } from '@/components/decisions';
+import { calculateBaseline } from '@/lib/decisions/simulation';
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -21,6 +22,10 @@ export default function Home() {
   const [decisions, setDecisions] = useState<DecisionEngineResult | null>(null);
   const [churnAnalysis, setChurnAnalysis] = useState<ChurnAnalysis | null>(null);
   const [deciding, setDeciding] = useState(false);
+
+  // Simulation state
+  const [selectedAction, setSelectedAction] = useState<Action | null>(null);
+  const [baseline, setBaseline] = useState<BaselineMetrics | null>(null);
 
   const handleUpload = async () => {
     if (!file) return;
@@ -47,7 +52,6 @@ export default function Home() {
       }
 
       setUploadResult(data);
-      // Auto-select first numeric column as target
       const numericCol = data.columnAnalysis.find((c: { type: string }) => c.type === 'numeric');
       if (numericCol) {
         setTargetColumn(numericCol.name);
@@ -85,8 +89,6 @@ export default function Home() {
       }
 
       setTrainingResult(data);
-
-      // Automatically call decide endpoint
       await handleDecide(data.bestModel);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Training failed');
@@ -122,6 +124,13 @@ export default function Home() {
 
       setChurnAnalysis(data.churnAnalysis);
       setDecisions(data.decisions);
+
+      // Calculate baseline metrics for simulation
+      const baselineMetrics = calculateBaseline(
+        data.churnAnalysis,
+        uploadResult.cleanedRowCount
+      );
+      setBaseline(baselineMetrics);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Decision generation failed');
     } finally {
@@ -130,7 +139,11 @@ export default function Home() {
   };
 
   const handleSimulate = (action: Action) => {
-    alert(`Simulating: ${action.title}\nExpected Impact: ${action.expectedImpact.delta}% ${action.expectedImpact.metric}`);
+    setSelectedAction(action);
+  };
+
+  const closeSimulation = () => {
+    setSelectedAction(null);
   };
 
   return (
@@ -356,7 +369,7 @@ export default function Home() {
           )}
 
           {/* Cleaned Data Preview */}
-          <div className="bg-white/10 border rounded-lg p-6">
+          <div className="bg-white/10 border rounded-lg p-6 mt-8">
             <h2 className="text-xl font-semibold mb-4">Cleaned Data Preview</h2>
             <div className="overflow-x-auto">
               <table className="min-w-full border">
@@ -384,6 +397,15 @@ export default function Home() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Simulation Modal */}
+      {selectedAction && baseline && (
+        <SimulationModal
+          action={selectedAction}
+          baseline={baseline}
+          onClose={closeSimulation}
+        />
       )}
     </div>
   );
