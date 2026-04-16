@@ -1,5 +1,4 @@
-import { ChurnAnalysis } from '@/types/decision';
-import { TrainedModel, Dataset } from '@/types/ml';
+import { ChurnAnalysis, TrainedModel, Dataset } from '@/types';
 
 export function analyzeChurn(model: TrainedModel, dataset: Dataset): ChurnAnalysis {
   const { features, labels, featureNames } = dataset;

@@ -1,6 +1,4 @@
-import { DecisionEngineResult, Action, ScoredAction, ChurnAnalysis } from '@/types/decision';
-import { TrainedModel } from '@/types/ml';
-import { Dataset } from '@/types/ml';
+import { DecisionEngineResult, Action, ScoredAction, ChurnAnalysis,TrainedModel,Dataset } from '@/types';
 
 const WEIGHTS = {
   impact: 40,

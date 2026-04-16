@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prepareDataset } from '@/lib/ml/featureEngineering';
 import { analyzeChurn, generateDecisions } from '@/lib/decisions';
-import { DecisionEngineResult, ChurnAnalysis } from '@/types/decision';
+import { DecisionEngineResult, ChurnAnalysis } from '@/types';
 
 export async function POST(req: NextRequest) {
   try {

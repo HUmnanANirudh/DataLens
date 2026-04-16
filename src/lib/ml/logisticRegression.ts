@@ -1,4 +1,4 @@
-import { Dataset, TrainedModel } from '@/types/ml';
+import { Dataset, TrainedModel } from '@/types';
 import { evaluateModel, predictByThreshold } from './evaluation';
 
 function sigmoid(x: number): number {

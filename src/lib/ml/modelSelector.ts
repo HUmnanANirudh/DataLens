@@ -1,4 +1,4 @@
-import { Dataset, TrainedModel, ModelSelectionResult } from '@/types/ml';
+import { Dataset, TrainedModel, ModelSelectionResult } from '@/types';
 import { trainTestSplit } from './featureEngineering';
 import { trainLogisticRegression } from './logisticRegression';
 import { trainRandomForest } from './randomForest';
