@@ -154,7 +154,10 @@ export default function Home() {
         throw new Error(data.error || 'Prediction failed');
       }
 
-      setPredictionResult(data.predictions);
+      setPredictionResult({
+        ...data.predictions,
+        summary: data.summary,
+      });
 
       // Automatically run decision engine with both predictions and summary
       await handleDecide(data.predictions, data.summary, bestModel.featureImportances, featureNames || uploadResult.columns);
