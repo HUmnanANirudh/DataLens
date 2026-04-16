@@ -37,12 +37,7 @@ export async function POST(req: NextRequest) {
     const churnAnalysis: ChurnAnalysis = analyzeChurn(model, dataset);
 
     // Generate decisions
-    const decisions: DecisionEngineResult = generateDecisions(
-      model,
-      dataset,
-      dataset.featureNames,
-      churnAnalysis
-    );
+    const decisions: DecisionEngineResult = generateDecisions(churnAnalysis);
 
     return NextResponse.json({
       success: true,

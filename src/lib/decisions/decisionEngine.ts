@@ -1,4 +1,4 @@
-import { DecisionEngineResult, Action, ScoredAction, ChurnAnalysis,TrainedModel,Dataset } from '@/types';
+import { DecisionEngineResult, Action, ScoredAction, ChurnAnalysis } from '@/types';
 
 const WEIGHTS = {
   impact: 40,
@@ -7,9 +7,6 @@ const WEIGHTS = {
 };
 
 export function generateDecisions(
-  model: TrainedModel,
-  dataset: Dataset,
-  featureNames: string[],
   churnAnalysis: ChurnAnalysis
 ): DecisionEngineResult {
   const actions: Action[] = [];
@@ -139,7 +136,7 @@ export function generateDecisions(
   }
 
   // Score and rank actions
-  const scoredActions = scoreActions(actions, churnAnalysis);
+  const scoredActions = scoreActions(actions);
   const top3Actions = scoredActions.slice(0, 3).map(sa => ({
     ...sa,
     score: undefined as unknown as number,
@@ -157,7 +154,7 @@ export function generateDecisions(
   };
 }
 
-function scoreActions(actions: Action[], churnAnalysis: ChurnAnalysis): ScoredAction[] {
+function scoreActions(actions: Action[]): ScoredAction[] {
   const maxImpact = Math.max(...actions.map(a => Math.abs(a.expectedImpact.delta)));
   const maxCoverage = Math.max(...actions.map(a => a.affectedUsers));
 

@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { UploadResult } from '@/types';
+import { UploadResult, DecisionEngineResult, ChurnAnalysis, Action } from '@/types';
 import { ModelCharts } from '@/components/ModelCharts';
 import { DatasetCharts } from '@/components/DatasetCharts';
+import { Decisions } from '@/components/decisions';
 
 interface ModelResult {
   name: string;
@@ -35,12 +36,19 @@ export default function Home() {
   const [trainingResult, setTrainingResult] = useState<TrainingResult | null>(null);
   const [training, setTraining] = useState(false);
 
+  // Decisions state
+  const [decisions, setDecisions] = useState<DecisionEngineResult | null>(null);
+  const [churnAnalysis, setChurnAnalysis] = useState<ChurnAnalysis | null>(null);
+  const [deciding, setDeciding] = useState(false);
+
   const handleUpload = async () => {
     if (!file) return;
 
     setLoading(true);
     setError(null);
     setTrainingResult(null);
+    setDecisions(null);
+    setChurnAnalysis(null);
 
     const formData = new FormData();
     formData.append('file', file);
@@ -75,6 +83,8 @@ export default function Home() {
 
     setTraining(true);
     setError(null);
+    setDecisions(null);
+    setChurnAnalysis(null);
 
     try {
       const res = await fetch('/api/train', {
@@ -94,11 +104,52 @@ export default function Home() {
       }
 
       setTrainingResult(data);
+
+      // Automatically call decide endpoint
+      await handleDecide(data.bestModel);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Training failed');
     } finally {
       setTraining(false);
     }
+  };
+
+  const handleDecide = async (bestModel: ModelResult) => {
+    if (!uploadResult || !targetColumn) return;
+
+    setDeciding(true);
+
+    try {
+      const res = await fetch('/api/decide', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          data: uploadResult.cleanedData,
+          columns: uploadResult.columns,
+          targetColumn,
+          modelWeights: bestModel.type === 'logistic_regression' ? bestModel.featureImportances : undefined,
+          modelType: bestModel.type,
+          featureImportances: bestModel.featureImportances,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Decision generation failed');
+      }
+
+      setChurnAnalysis(data.churnAnalysis);
+      setDecisions(data.decisions);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Decision generation failed');
+    } finally {
+      setDeciding(false);
+    }
+  };
+
+  const handleSimulate = (action: Action) => {
+    alert(`Simulating: ${action.title}\nExpected Impact: ${action.expectedImpact.delta}% ${action.expectedImpact.metric}`);
   };
 
   return (
@@ -185,7 +236,7 @@ export default function Home() {
                   </tr>
                 </thead>
                 <tbody>
-                  {uploadResult.columnAnalysis.map((col: ColumnAnalysis) => (
+                  {uploadResult.columnAnalysis.map((col: { name: string; type: string; uniqueValues: number; nullCount: number; sample: string[] }) => (
                     <tr key={col.name} className="border-t border-white/10">
                       <td className="py-2 px-3 font-mono">{col.name}</td>
                       <td className="py-2 px-3">
@@ -240,7 +291,7 @@ export default function Home() {
                 disabled={!targetColumn || training}
                 className="px-6 py-2 bg-green-500 text-white rounded disabled:bg-gray-300"
               >
-                {training ? 'Training...' : 'Train All Models'}
+                {training ? 'Training...' : 'Train & Generate Actions'}
               </button>
             </div>
 
@@ -305,6 +356,24 @@ export default function Home() {
             )}
           </div>
 
+          {/* Decisions Section */}
+          {(decisions || deciding) && (
+            <div className="bg-white/5 border border-yellow-500/30 rounded-xl p-6">
+              {deciding ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin w-8 h-8 border-2 border-yellow-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                  <p className="text-gray-400">Generating decisions...</p>
+                </div>
+              ) : (
+                <Decisions
+                  decisions={decisions}
+                  churnAnalysis={churnAnalysis}
+                  onSimulate={handleSimulate}
+                />
+              )}
+            </div>
+          )}
+
           {/* Cleaned Data Preview */}
           <div className="bg-white/10 border rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Cleaned Data Preview</h2>
@@ -337,12 +406,4 @@ export default function Home() {
       )}
     </div>
   );
-}
-
-interface ColumnAnalysis {
-  name: string;
-  type: 'numeric' | 'categorical' | 'date' | 'empty';
-  uniqueValues: number;
-  nullCount: number;
-  sample: string[];
 }

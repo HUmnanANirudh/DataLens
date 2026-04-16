@@ -1,7 +1,7 @@
 import { ChurnAnalysis, TrainedModel, Dataset } from '@/types';
 
 export function analyzeChurn(model: TrainedModel, dataset: Dataset): ChurnAnalysis {
-  const { features, labels, featureNames } = dataset;
+  const { features, featureNames } = dataset;
 
   // Get predictions from the model
   const probabilities = getProbabilities(model, features);
