@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   const systemPrompt = buildSystemPrompt(context);
 
   const result = streamText({
-    model: google('gemini-3.1-pro-preview'),
+    model: google('gemini-2.5-flash'),
     system: systemPrompt,
     messages: coreMessages,
   });

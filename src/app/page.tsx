@@ -1,14 +1,19 @@
 'use client';
 
-import { useState } from 'react';
-import { UploadResult, TrainingResult, DecisionEngineResult, ChurnAnalysis, Action, BaselineMetrics, PredictionResult } from '@/types';
-import { ModelCharts } from '@/components/ModelCharts';
+import { useState, useCallback } from 'react';
+import { UploadResult, TrainingResult, DecisionEngineResult, ChurnAnalysis, Action, BaselineMetrics, PredictionResult, BestModel, ScoredAction, ChatContext } from '@/types';
 import { DatasetCharts } from '@/components/DatasetCharts';
-import { Decisions, SimulationModal } from '@/components/decisions';
+import { ActionSection } from '@/components/ui/action-section';
+import { EvidenceCharts } from '@/components/ui/evidence-charts';
+import { SimulationSection } from '@/components/ui/simulation-section';
 import { calculateBaseline } from '@/lib/decisions/simulation';
 import { ChatBot } from '@/components/ChatBot';
 import { MessageSquareIcon } from 'lucide-react';
-import { BestModel } from '@/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Spinner } from '@/components/ui/spinner';
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -31,11 +36,13 @@ export default function Home() {
   const [deciding, setDeciding] = useState(false);
 
   // Simulation state
-  const [selectedAction, setSelectedAction] = useState<Action | null>(null);
+  const [selectedAction, setSelectedAction] = useState<ScoredAction | null>(null);
   const [baseline, setBaseline] = useState<BaselineMetrics | null>(null);
+  const [simulationResult, setSimulationResult] = useState<{ before: BaselineMetrics; after: { churnRate: number; atRiskCustomers: number; LTV: number; conversionRate: number }; delta: { churnRate: number; atRiskCustomers: number; LTV: number; conversionRate: number } } | null>(null);
 
   // Chat state
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatContext, setChatContext] = useState<ChatContext | null>(null);
 
   const handleUpload = async () => {
     if (!file) return;
@@ -46,6 +53,7 @@ export default function Home() {
     setPredictionResult(null);
     setDecisions(null);
     setChurnAnalysis(null);
+    setSimulationResult(null);
 
     const formData = new FormData();
     formData.append('file', file);
@@ -82,6 +90,7 @@ export default function Home() {
     setPredictionResult(null);
     setDecisions(null);
     setChurnAnalysis(null);
+    setSimulationResult(null);
 
     try {
       const res = await fetch('/api/train', {
@@ -101,8 +110,6 @@ export default function Home() {
       }
 
       setTrainingResult(data);
-
-      // Automatically run prediction
       await handlePredict(data.bestModel, data.featureNames, data.encodingMaps, data.scalerParams);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Training failed');
@@ -142,7 +149,6 @@ export default function Home() {
         summary: data.summary,
       });
 
-      // Automatically run decision engine with both predictions and summary
       await handleDecide(data.predictions, data.summary, bestModel.modelData?.featureImportances, featureNames || uploadResult.columns);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Prediction failed');
@@ -180,12 +186,26 @@ export default function Home() {
       setChurnAnalysis(data.churnAnalysis);
       setDecisions(data.decisions);
 
-      // Calculate baseline for simulation
       const baselineMetrics = calculateBaseline(
         data.churnAnalysis,
         uploadResult?.cleanedRowCount || 0
       );
       setBaseline(baselineMetrics);
+
+      // Build chat context
+      setChatContext({
+        churnRate: baselineMetrics.churnRate,
+        highRiskCount: data.churnAnalysis.highRiskCount,
+        mediumRiskCount: data.churnAnalysis.mediumRiskCount,
+        lowRiskCount: data.churnAnalysis.lowRiskCount,
+        topDrivers: data.churnAnalysis.churnRiskDrivers.slice(0, 5).map((d: { feature: string }) => d.feature),
+        actions: data.decisions.top3Actions.map((a: ScoredAction) => ({ title: a.title, id: a.id })),
+        segments: {
+          highRisk: data.churnAnalysis.highRiskCount,
+          mediumRisk: data.churnAnalysis.mediumRiskCount,
+          lowRisk: data.churnAnalysis.lowRiskCount,
+        },
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Decision generation failed');
     } finally {
@@ -193,248 +213,347 @@ export default function Home() {
     }
   };
 
-  const handleSimulate = (action: Action) => {
-    setSelectedAction(action);
-  };
+  const handleSimulate = useCallback(async (action: ScoredAction) => {
+    if (!baseline) return;
 
-  const closeSimulation = () => {
+    setSelectedAction(action);
+
+    try {
+      const res = await fetch('/api/simulate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, baseline }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Simulation failed');
+      }
+
+      setSimulationResult(data.simulation);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Simulation failed');
+    }
+  }, [baseline]);
+
+  const handleResetSimulation = useCallback(() => {
     setSelectedAction(null);
-  };
+    setSimulationResult(null);
+  }, []);
+
+  const handleAskAbout = useCallback((action: ScoredAction, context?: string) => {
+    if (chatContext) {
+      setChatContext({
+        ...chatContext,
+        chartData: context ? {
+          type: 'action',
+          description: context,
+        } : undefined,
+      });
+    }
+    setIsChatOpen(true);
+  }, [chatContext]);
+
+  const handleChartAsk = useCallback((chartContext: { chartType: string; feature?: string; value?: number; description?: string }) => {
+    if (chatContext) {
+      setChatContext({
+        ...chatContext,
+        chartData: {
+          type: chartContext.chartType,
+          feature: chartContext.feature,
+          value: chartContext.value,
+          description: chartContext.description,
+        },
+      });
+    }
+    setIsChatOpen(true);
+  }, [chatContext]);
 
   const isProcessing = loading || training || predicting || deciding;
 
   return (
-    <div className="min-h-screen p-8 max-w-6xl mx-auto">
+    <div className="min-h-screen p-8 max-w-7xl mx-auto">
       <h1 className="text-3xl font-bold mb-8">DataLens - AI Growth Strategy Engine</h1>
 
       {/* Upload Section */}
-      <div className="border-2 border-dashed border-gray-600 rounded-lg p-8 mb-8">
-        <input
-          type="file"
-          accept=".csv"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
-          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-500 file:text-white hover:file:bg-blue-600"
-        />
-        <button
-          onClick={handleUpload}
-          disabled={!file || loading}
-          className="mt-4 px-6 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
-        >
-          {loading ? 'Processing...' : 'Upload & Analyze'}
-        </button>
-      </div>
+      <Card className="mb-8">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-4 flex-wrap">
+            <input
+              type="file"
+              accept=".csv"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              className="block flex-1 min-w-48 text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+            />
+            <Button
+              onClick={handleUpload}
+              disabled={!file || loading}
+            >
+              {loading ? 'Processing...' : 'Upload & Analyze'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-8">
-          {error}
-        </div>
+        <Card className="mb-6 border-destructive">
+          <CardContent className="pt-6">
+            <p className="text-destructive">{error}</p>
+          </CardContent>
+        </Card>
       )}
 
       {/* Processing Status */}
       {isProcessing && (
-        <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4 mb-6">
-          <div className="flex items-center gap-3">
-            <div className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-            <span className="text-blue-300">
-              {training && 'Training models...'}
-              {predicting && 'Running predictions...'}
-              {deciding && 'Generating decisions...'}
-            </span>
-          </div>
-        </div>
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <Spinner />
+              <span className="text-sm text-muted-foreground">
+                {training && 'Training models...'}
+                {predicting && 'Running predictions...'}
+                {deciding && 'Generating decisions...'}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {uploadResult && (
         <>
           {/* Dropped Columns Alert */}
           {uploadResult.droppedColumns.length > 0 && (
-            <div className="bg-red-900/50 border border-red-500 rounded-lg p-4 mb-6">
-              <h3 className="font-semibold text-red-400 mb-2">
-                Dropped {uploadResult.droppedColumns.length} invalid column(s)
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {uploadResult.droppedColumns.map((col: { name: string; reason: string }) => (
-                  <span
-                    key={col.name}
-                    className="px-3 py-1 bg-red-900/50 rounded-full text-sm text-red-300"
-                    title={col.reason}
-                  >
-                    {col.name || '(empty)'} - {col.reason}
-                  </span>
-                ))}
-              </div>
-            </div>
+            <Card className="mb-6 border-destructive/50">
+              <CardHeader>
+                <CardTitle className="text-destructive text-lg">
+                  Dropped {uploadResult.droppedColumns.length} invalid column(s)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {uploadResult.droppedColumns.map((col: { name: string; reason: string }) => (
+                    <Badge key={col.name} variant="outline" title={col.reason}>
+                      {col.name || '(empty)'} - {col.reason}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-blue-500 p-4 rounded">
-              <p className="text-sm text-gray-600">Columns</p>
-              <p className="text-2xl font-bold">{uploadResult.columns.length}</p>
-            </div>
-            <div className="bg-green-500 p-4 rounded">
-              <p className="text-sm text-gray-600">Clean Rows</p>
-              <p className="text-2xl font-bold">{uploadResult.cleanedRowCount.toLocaleString()}</p>
-            </div>
-            <div className="bg-purple-500 p-4 rounded">
-              <p className="text-sm text-gray-600">Prediction Status</p>
-              <p className="text-2xl font-bold">{predictionResult ? 'Ready' : 'Pending'}</p>
-            </div>
-            <div className="bg-yellow-500 p-4 rounded">
-              <p className="text-sm text-gray-600">Actions</p>
-              <p className="text-2xl font-bold">{decisions ? 'Generated' : 'Pending'}</p>
-            </div>
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-xs text-muted-foreground">Columns</p>
+                <p className="text-2xl font-bold">{uploadResult.columns.length}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-xs text-muted-foreground">Clean Rows</p>
+                <p className="text-2xl font-bold">{uploadResult.cleanedRowCount.toLocaleString()}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-xs text-muted-foreground">Prediction Status</p>
+                <p className="text-2xl font-bold">{predictionResult ? 'Ready' : 'Pending'}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-xs text-muted-foreground">Actions</p>
+                <p className="text-2xl font-bold">{decisions ? 'Generated' : 'Pending'}</p>
+              </CardContent>
+            </Card>
           </div>
+
+          {/* Training Section */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Model Training</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4 flex-wrap mb-6">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium">Target Column:</label>
+                  <select
+                    value={targetColumn}
+                    onChange={(e) => setTargetColumn(e.target.value)}
+                    className="px-4 py-2 border rounded-md bg-background"
+                  >
+                    <option value="">Select target</option>
+                    {uploadResult.columns.map((col: string) => (
+                      <option key={col} value={col}>{col}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <Button
+                  onClick={handleTrain}
+                  disabled={!targetColumn || isProcessing}
+                >
+                  {isProcessing ? 'Processing...' : 'Train & Predict'}
+                </Button>
+              </div>
+
+              {trainingResult && (
+                <>
+                  {/* Best Model */}
+                  <Card className="mb-6 border-green-500/50 bg-green-500/5">
+                    <CardHeader>
+                      <CardTitle className="text-green-400">
+                        Best Model: {trainingResult.bestModel.name}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Accuracy</p>
+                          <p className="text-xl font-bold">{(trainingResult.bestModel.evaluation.accuracy * 100).toFixed(1)}%</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">F1 Score</p>
+                          <p className="text-xl font-bold text-yellow-400">{(trainingResult.bestModel.evaluation.f1 * 100).toFixed(1)}%</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Precision</p>
+                          <p className="text-xl font-bold">{(trainingResult.bestModel.evaluation.precision * 100).toFixed(1)}%</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Recall</p>
+                          <p className="text-xl font-bold">{(trainingResult.bestModel.evaluation.recall * 100).toFixed(1)}%</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* TOP 3 ACTIONS - PRIMARY DISPLAY */}
+          {decisions && churnAnalysis && (
+            <>
+              <ActionSection
+                top3Actions={decisions.top3Actions}
+                churnAnalysis={churnAnalysis}
+                onSimulate={handleSimulate}
+                onAskAbout={handleAskAbout}
+              />
+
+              <Separator className="my-8" />
+
+              {/* SIMULATION SECTION */}
+              {selectedAction && baseline && (
+                <div className="mb-8">
+                  <SimulationSection
+                    action={selectedAction}
+                    baseline={baseline}
+                    simulatedResult={simulationResult || undefined}
+                    onSimulate={() => handleSimulate(selectedAction)}
+                    onReset={handleResetSimulation}
+                  />
+                </div>
+              )}
+
+              <Separator className="my-8" />
+
+              {/* EVIDENCE CHARTS */}
+              <EvidenceCharts
+                riskDistribution={predictionResult ? {
+                  highRisk: predictionResult.summary.highRisk,
+                  mediumRisk: predictionResult.summary.mediumRisk,
+                  lowRisk: predictionResult.summary.lowRisk,
+                } : undefined}
+                featureImportances={churnAnalysis.churnRiskDrivers}
+                onAskAbout={handleChartAsk}
+              />
+
+              <Separator className="my-8" />
+            </>
+          )}
+
+          {/* Prediction Summary */}
+          {predictionResult && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Prediction Analysis</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-red-400">{predictionResult.summary.highRisk}</p>
+                    <p className="text-xs text-muted-foreground">High Risk</p>
+                    <p className="text-xs text-red-300">{predictionResult.summary.highRiskPercent.toFixed(1)}%</p>
+                  </div>
+                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-yellow-400">{predictionResult.summary.mediumRisk}</p>
+                    <p className="text-xs text-muted-foreground">Medium Risk</p>
+                    <p className="text-xs text-yellow-300">{predictionResult.summary.mediumRiskPercent.toFixed(1)}%</p>
+                  </div>
+                  <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-green-400">{predictionResult.summary.lowRisk}</p>
+                    <p className="text-xs text-muted-foreground">Low Risk</p>
+                    <p className="text-xs text-green-300">{predictionResult.summary.lowRiskPercent.toFixed(1)}%</p>
+                  </div>
+                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-blue-400">{(predictionResult.summary.avgProbability * 100).toFixed(1)}%</p>
+                    <p className="text-xs text-muted-foreground">Avg Probability</p>
+                  </div>
+                  <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3 text-center col-span-2">
+                    <p className="text-2xl font-bold text-purple-400">{predictionResult.summary.total.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">Total Customers</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Dataset Charts */}
           <DatasetCharts uploadResult={uploadResult} />
 
-          {/* Training Section */}
-          <div className="bg-white/10 border rounded-lg p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Model Training</h2>
-
-            <div className="flex items-center gap-4 mb-6">
-              <label className="text-sm">Target Column:</label>
-              <select
-                value={targetColumn}
-                onChange={(e) => setTargetColumn(e.target.value)}
-                className="px-4 py-2 bg-gray-800 border border-gray-600 rounded text-white"
-              >
-                <option value="">Select target</option>
-                {uploadResult.columns.map((col: string) => (
-                  <option key={col} value={col}>{col}</option>
-                ))}
-              </select>
-
-              <button
-                onClick={handleTrain}
-                disabled={!targetColumn || isProcessing}
-                className="px-6 py-2 bg-green-500 text-white rounded disabled:bg-gray-300"
-              >
-                {isProcessing ? 'Processing...' : 'Train & Predict'}
-              </button>
-            </div>
-
-            {trainingResult && (
-              <>
-                {/* Best Model */}
-                <div className="bg-green-500/20 border border-green-500 rounded-lg p-4 mb-6">
-                  <h3 className="font-semibold text-green-400 mb-2">
-                    Best Model: {trainingResult.bestModel.name}
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                      <p className="text-xs text-gray-400">Accuracy</p>
-                      <p className="text-xl font-bold">{(trainingResult.bestModel.evaluation.accuracy * 100).toFixed(1)}%</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400">F1 Score</p>
-                      <p className="text-xl font-bold text-yellow-400">{(trainingResult.bestModel.evaluation.f1 * 100).toFixed(1)}%</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400">Precision</p>
-                      <p className="text-xl font-bold">{(trainingResult.bestModel.evaluation.precision * 100).toFixed(1)}%</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400">Recall</p>
-                      <p className="text-xl font-bold">{(trainingResult.bestModel.evaluation.recall * 100).toFixed(1)}%</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Charts */}
-                <ModelCharts
-                  trainingResult={trainingResult}
-                  columns={uploadResult.columns}
-                />
-              </>
-            )}
-          </div>
-
-          {/* Prediction Summary */}
-          {predictionResult && (
-            <div className="bg-white/10 border rounded-lg p-6 mb-6">
-              <h2 className="text-xl font-semibold mb-4">Prediction Analysis</h2>
-              <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
-                <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-center">
-                  <p className="text-2xl font-bold text-red-400">{predictionResult.summary.highRisk}</p>
-                  <p className="text-xs text-gray-400">High Risk</p>
-                  <p className="text-xs text-red-300">{predictionResult.summary.highRiskPercent.toFixed(1)}%</p>
-                </div>
-                <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-3 text-center">
-                  <p className="text-2xl font-bold text-yellow-400">{predictionResult.summary.mediumRisk}</p>
-                  <p className="text-xs text-gray-400">Medium Risk</p>
-                  <p className="text-xs text-yellow-300">{predictionResult.summary.mediumRiskPercent.toFixed(1)}%</p>
-                </div>
-                <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-3 text-center">
-                  <p className="text-2xl font-bold text-green-400">{predictionResult.summary.lowRisk}</p>
-                  <p className="text-xs text-gray-400">Low Risk</p>
-                  <p className="text-xs text-green-300">{predictionResult.summary.lowRiskPercent.toFixed(1)}%</p>
-                </div>
-                <div className="bg-blue-500/20 border border-blue-500/50 rounded-lg p-3 text-center">
-                  <p className="text-2xl font-bold text-blue-400">{(predictionResult.summary.avgProbability * 100).toFixed(1)}%</p>
-                  <p className="text-xs text-gray-400">Avg Probability</p>
-                </div>
-                <div className="bg-purple-500/20 border border-purple-500/50 rounded-lg p-3 text-center col-span-2">
-                  <p className="text-2xl font-bold text-purple-400">{predictionResult.summary.total.toLocaleString()}</p>
-                  <p className="text-xs text-gray-400">Total Customers</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Decisions Section - TOP PRIORITY */}
-          {decisions && churnAnalysis && (
-            <Decisions
-              decisions={decisions}
-              churnAnalysis={churnAnalysis}
-              onSimulate={handleSimulate}
-            />
-          )}
-
           {/* Data Preview */}
-          <div className="bg-white/10 border rounded-lg p-6 mt-8">
-            <h2 className="text-xl font-semibold mb-4">Cleaned Data Preview</h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full border">
-                <thead>
-                  <tr>
-                    {uploadResult.columns.map((col: string) => (
-                      <th key={col} className="border px-4 py-2 text-left text-sm">{col}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {uploadResult.cleanedPreview.slice(0, 5).map((row: Record<string, string>, i: number) => (
-                    <tr key={i}>
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle>Cleaned Data Preview</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="min-w-full border">
+                  <thead>
+                    <tr>
                       {uploadResult.columns.map((col: string) => (
-                        <td key={col} className="border px-4 py-2 text-sm">{row[col]}</td>
+                        <th key={col} className="border px-4 py-2 text-left text-sm font-medium">{col}</th>
                       ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                  </thead>
+                  <tbody>
+                    {uploadResult.cleanedPreview.slice(0, 5).map((row: Record<string, string>, i: number) => (
+                      <tr key={i}>
+                        {uploadResult.columns.map((col: string) => (
+                          <td key={col} className="border px-4 py-2 text-sm">{row[col]}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
         </>
       )}
 
-      {/* Simulation Modal */}
-      {selectedAction && baseline && (
-        <SimulationModal
-          action={selectedAction}
-          baseline={baseline}
-          onClose={closeSimulation}
-        />
-      )}
-      <ChatBot isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
-      <button
+      <ChatBot isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} context={chatContext || undefined} />
+      <Button
         onClick={() => setIsChatOpen(true)}
-        className="fixed bottom-6 right-6 p-4 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg z-30 transition-all hover:scale-105"
+        className="fixed bottom-6 right-6 size-14 rounded-full shadow-lg z-30"
         aria-label="Open chat"
       >
         <MessageSquareIcon className="size-6" />
-      </button>
+      </Button>
     </div>
   );
 }
