@@ -3,42 +3,46 @@
 import {
   PieChart as RechartsPieChart,
   Pie,
-  Cell,
 } from 'recharts';
 
 import { PieChartProps } from '@/types';
 import {
   ChartContainer,
+  ChartTooltip,
   ChartTooltipContent,
   ChartLegendContent,
   ChartConfig,
 } from '@/components/ui/chart';
 
-const COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)'] as const;
-
 export function PieChart({
   data,
   dataKey,
   nameKey = 'name',
-  height = 256,
   showLabels = true,
 }: PieChartProps) {
   if (!data || data.length === 0) return null;
 
+  const colors = [
+    'var(--chart-1)',
+    'var(--chart-2)',
+    'var(--chart-3)',
+    'var(--chart-4)',
+    'var(--chart-5)',
+  ] as const;
+
   const chartConfig: ChartConfig = {};
-  data.forEach((item, index) => {
+  const dataWithColors = data.map((item, index) => {
     const key = String(item[nameKey] || index);
-    chartConfig[key] = {
-      label: key,
-      color: COLORS[index % COLORS.length],
-    };
+    const color = colors[index % colors.length];
+    chartConfig[key] = { label: key, color };
+    return { ...item, fill: color };
   });
 
   return (
-    <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+    <ChartContainer config={chartConfig} className="min-h-50 w-full">
       <RechartsPieChart accessibilityLayer>
         <Pie
-          data={data}
+          data={dataWithColors}
           cx="50%"
           cy="50%"
           labelLine={showLabels}
@@ -48,18 +52,9 @@ export function PieChart({
           nameKey={nameKey}
           outerRadius={80}
           dataKey={dataKey}
-        >
-          {data.map((_, index) => (
-            <Cell
-              key={`cell-${index}`}
-              fill={`var(--color-${String(data[index]?.[nameKey] || index)})`}
-            />
-          ))}
-        </Pie>
-        <ChartTooltipContent
-          indicator="dot"
-          formatter={(value) => [value]}
+          fill="fill"
         />
+        <ChartTooltip content={<ChartTooltipContent />} />
         <ChartLegendContent />
       </RechartsPieChart>
     </ChartContainer>

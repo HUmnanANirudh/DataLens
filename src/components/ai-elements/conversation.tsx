@@ -81,6 +81,10 @@ export const ConversationScrollButton = ({
     scrollToBottom();
   }, [scrollToBottom]);
 
+  if (isAtBottom === undefined) {
+    return null;
+  }
+
   return (
     !isAtBottom && (
       <Button

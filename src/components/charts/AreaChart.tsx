@@ -11,6 +11,7 @@ import {
 import { AreaChartProps } from '@/types';
 import {
   ChartContainer,
+  ChartTooltip,
   ChartTooltipContent,
   ChartLegendContent,
   ChartConfig,
@@ -20,7 +21,6 @@ export function AreaChart({
   data,
   areas,
   xAxisKey = 'index',
-  height = 256,
   showGrid = true,
   fillOpacity = 0.3,
 }: AreaChartProps) {
@@ -36,7 +36,7 @@ export function AreaChart({
   }, {} as ChartConfig);
 
   return (
-    <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+    <ChartContainer config={chartConfig} className="min-h-50 w-full">
       <RechartsAreaChart accessibilityLayer data={data}>
         {showGrid && <CartesianGrid vertical={false} stroke="var(--border)" />}
         <XAxis
@@ -53,12 +53,9 @@ export function AreaChart({
           tickMargin={10}
           axisLine={false}
         />
-        <ChartTooltipContent
-          indicator="dot"
-          formatter={(value) => [value]}
-        />
+        <ChartTooltip content={<ChartTooltipContent />} />
         <ChartLegendContent />
-        {areas.map((area, index) => (
+        {areas.map((area) => (
           <Area
             key={area.dataKey}
             type="monotone"

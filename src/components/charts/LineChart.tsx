@@ -11,6 +11,7 @@ import {
 import { LineChartProps } from '@/types';
 import {
   ChartContainer,
+  ChartTooltip,
   ChartTooltipContent,
   ChartLegendContent,
   ChartConfig,
@@ -20,7 +21,6 @@ export function LineChart({
   data,
   lines,
   xAxisKey = 'index',
-  height = 256,
   showGrid = true,
   strokeWidth = 2,
   fillArea = false,
@@ -37,7 +37,7 @@ export function LineChart({
   }, {} as ChartConfig);
 
   return (
-    <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+    <ChartContainer config={chartConfig} className="min-h-50 w-full">
       <RechartsLineChart accessibilityLayer data={data}>
         {showGrid && <CartesianGrid vertical={false} stroke="var(--border)" />}
         <XAxis
@@ -54,10 +54,7 @@ export function LineChart({
           tickMargin={10}
           axisLine={false}
         />
-        <ChartTooltipContent
-          indicator="line"
-          formatter={(value) => [value]}
-        />
+        <ChartTooltip content={<ChartTooltipContent />} />
         <ChartLegendContent />
         {lines.map((line) => (
           <Line

@@ -30,19 +30,26 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { CopyIcon, CheckIcon, MessageSquareIcon } from 'lucide-react';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { UIMessage } from 'ai';
 import { ChatBotProps } from '@/types';
 
 export function ChatBot({ isOpen, onClose }: ChatBotProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [input, setInput] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage, status, error: chatError } = useChat({
     transport: new DefaultChatTransport({
       api: '/api/chat',
     }),
   });
+
+  useEffect(() => {
+    if (chatError) {
+      setError(chatError.message);
+    }
+  }, [chatError]);
 
   const handleSubmit = useCallback(
     (message: PromptInputMessage) => {
@@ -78,7 +85,12 @@ export function ChatBot({ isOpen, onClose }: ChatBotProps) {
         <div className="flex-1 overflow-hidden h-[calc(100%-140px)]">
           <Conversation>
             <ConversationContent>
-              {messages.length === 0 && (
+              {error && (
+                <div className="mx-auto max-w-md rounded-lg bg-destructive/10 p-4 text-destructive text-sm">
+                  {error}
+                </div>
+              )}
+              {messages.length === 0 && !error && (
                 <ConversationEmptyState
                   title="Chat with DataLens"
                   description="Ask me anything about your data, ML models, or predictions"

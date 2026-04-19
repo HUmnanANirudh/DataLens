@@ -11,6 +11,7 @@ import {
 import { BarChartProps } from '@/types';
 import {
   ChartContainer,
+  ChartTooltip,
   ChartTooltipContent,
   ChartLegendContent,
   ChartConfig,
@@ -22,7 +23,6 @@ export function BarChart({
   nameKey = 'name',
   layout = 'horizontal',
   fill = 'var(--chart-1)',
-  height = 256,
   domain = [0, 'auto'],
   formatter,
   showGrid = true,
@@ -36,7 +36,7 @@ export function BarChart({
   } satisfies ChartConfig;
 
   return (
-    <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+    <ChartContainer config={chartConfig} className="min-h-50 w-full">
       <RechartsBarChart accessibilityLayer data={data} layout={layout}>
         {showGrid && <CartesianGrid vertical={false} stroke="var(--border)" />}
         {showXAxis && (
@@ -62,10 +62,7 @@ export function BarChart({
             axisLine={false}
           />
         )}
-        <ChartTooltipContent
-          formatter={(value) => [formatter ? formatter(Number(value)) : value, nameKey]}
-          indicator="dot"
-        />
+        <ChartTooltip content={<ChartTooltipContent />} />
         <ChartLegendContent />
         <Bar dataKey={dataKey} fill={`var(--color-${dataKey})`} radius={[0, 4, 4, 0]} />
       </RechartsBarChart>
