@@ -13,13 +13,15 @@ import {
   ChartLegendContent,
   ChartConfig,
 } from '@/components/ui/chart';
+import { cn } from '@/lib/utils';
 
 export function PieChart({
   data,
   dataKey,
   nameKey = 'name',
   showLabels = true,
-}: PieChartProps) {
+  className,
+}: PieChartProps & { className?: string }) {
   if (!data || data.length === 0) return null;
 
   const colors = [
@@ -39,7 +41,7 @@ export function PieChart({
   });
 
   return (
-    <ChartContainer config={chartConfig} className="min-h-50 w-full">
+    <ChartContainer config={chartConfig} className={cn("w-full aspect-auto h-[180px]", className)}>
       <RechartsPieChart accessibilityLayer>
         <Pie
           data={dataWithColors}
@@ -50,7 +52,7 @@ export function PieChart({
             showLabels ? `${name} ${((percent || 0) * 100).toFixed(0)}%` : undefined
           }
           nameKey={nameKey}
-          outerRadius={80}
+          outerRadius={55}
           dataKey={dataKey}
           fill="fill"
         />

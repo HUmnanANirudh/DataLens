@@ -16,6 +16,7 @@ import {
   ChartLegendContent,
   ChartConfig,
 } from '@/components/ui/chart';
+import { cn } from '@/lib/utils';
 
 export function AreaChart({
   data,
@@ -23,7 +24,8 @@ export function AreaChart({
   xAxisKey = 'index',
   showGrid = true,
   fillOpacity = 0.3,
-}: AreaChartProps) {
+  className,
+}: AreaChartProps & { className?: string }) {
   if (!data || data.length === 0 || !areas || areas.length === 0) return null;
 
   const chartConfig = areas.reduce((acc, area, index) => {
@@ -36,7 +38,7 @@ export function AreaChart({
   }, {} as ChartConfig);
 
   return (
-    <ChartContainer config={chartConfig} className="min-h-50 w-full">
+    <ChartContainer config={chartConfig} className={cn("w-full aspect-auto h-[180px]", className)}>
       <RechartsAreaChart accessibilityLayer data={data}>
         {showGrid && <CartesianGrid vertical={false} stroke="var(--border)" />}
         <XAxis

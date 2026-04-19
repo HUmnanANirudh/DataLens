@@ -35,39 +35,41 @@ export function ModelCharts({ trainingResult, columns }: ModelChartsProps) {
   const percentFormatter = (v: number) => `${(v * 100).toFixed(1)}%`;
 
   return (
-    <div className="space-y-8">
-      {/* F1 Score Leaderboard Chart */}
-      <div className="bg-white/10 border rounded-lg p-6">
-        <h3 className="text-lg font-semibold mb-4">Model F1 Score Comparison</h3>
-        <BarChart
-          data={leaderboardData}
-          dataKey="value"
-          nameKey="name"
-          fill="#3B82F6"
-          formatter={percentFormatter}
-        />
+    <div className="space-y-4">
+      {/* Row 1: F1 Comparison + Best Model Metrics side by side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white/10 border rounded-lg p-4">
+          <h3 className="text-sm font-semibold mb-2 text-muted-foreground">Model F1 Score Comparison</h3>
+          <BarChart
+            data={leaderboardData}
+            dataKey="value"
+            nameKey="name"
+            fill="#3B82F6"
+            formatter={percentFormatter}
+            className="h-[150px]"
+          />
+        </div>
+        <div className="bg-white/10 border rounded-lg p-4">
+          <h3 className="text-sm font-semibold mb-2 text-muted-foreground">
+            Best Model Metrics — {bestModel.name}
+          </h3>
+          <BarChart
+            data={metricsData}
+            dataKey="value"
+            nameKey="name"
+            layout="vertical"
+            fill="#10B981"
+            formatter={percentFormatter}
+            className="h-[150px]"
+          />
+        </div>
       </div>
 
-      {/* Best Model Metrics */}
-      <div className="bg-white/10 border rounded-lg p-6">
-        <h3 className="text-lg font-semibold mb-4">
-          Best Model Metrics - {bestModel.name}
-        </h3>
-        <BarChart
-          data={metricsData}
-          dataKey="value"
-          nameKey="name"
-          layout="vertical"
-          fill="#10B981"
-          formatter={percentFormatter}
-        />
-      </div>
-
-      {/* Feature Importance Chart */}
+      {/* Row 2: Feature Importance - full width */}
       {importanceData.length > 0 && (
-        <div className="bg-white/10 border rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-4">
-            Feature Importance - {bestModel.name}
+        <div className="bg-white/10 border rounded-lg p-4">
+          <h3 className="text-sm font-semibold mb-2 text-muted-foreground">
+            Feature Importance — {bestModel.name}
           </h3>
           <BarChart
             data={importanceData}
@@ -76,6 +78,7 @@ export function ModelCharts({ trainingResult, columns }: ModelChartsProps) {
             layout="vertical"
             fill="#F59E0B"
             formatter={percentFormatter}
+            className="h-[160px]"
           />
         </div>
       )}

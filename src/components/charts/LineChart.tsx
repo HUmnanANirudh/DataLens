@@ -16,6 +16,7 @@ import {
   ChartLegendContent,
   ChartConfig,
 } from '@/components/ui/chart';
+import { cn } from '@/lib/utils';
 
 export function LineChart({
   data,
@@ -24,7 +25,8 @@ export function LineChart({
   showGrid = true,
   strokeWidth = 2,
   fillArea = false,
-}: LineChartProps) {
+  className,
+}: LineChartProps & { className?: string }) {
   if (!data || data.length === 0 || !lines || lines.length === 0) return null;
 
   const chartConfig = lines.reduce((acc, line, index) => {
@@ -37,7 +39,7 @@ export function LineChart({
   }, {} as ChartConfig);
 
   return (
-    <ChartContainer config={chartConfig} className="min-h-50 w-full">
+    <ChartContainer config={chartConfig} className={cn("w-full aspect-auto h-[180px]", className)}>
       <RechartsLineChart accessibilityLayer data={data}>
         {showGrid && <CartesianGrid vertical={false} stroke="var(--border)" />}
         <XAxis

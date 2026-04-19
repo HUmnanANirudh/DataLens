@@ -141,12 +141,12 @@ export function EvidenceCharts({
           <TabsContent value="risk" className="mt-4">
             {riskData.length > 0 ? (
               <div className="space-y-4">
-                <div className={cn("h-48 rounded-lg p-4", simulationActive && "ring-2 ring-primary ring-offset-2")}>
+                <div className={cn("rounded-lg p-2", simulationActive && "ring-2 ring-primary ring-offset-2")}>
                   <PieChart
                     data={riskData.map(d => ({ name: d.name, value: d.value }))}
                     dataKey="value"
                     nameKey="name"
-                    height={192}
+                    height={160}
                   />
                 </div>
                 <ScrollArea className="h-auto">
@@ -207,13 +207,13 @@ export function EvidenceCharts({
           <TabsContent value="drivers" className="mt-4">
             {importanceData.length > 0 ? (
               <div className="space-y-2">
-                <div className={cn("h-48 rounded-lg p-4", simulationActive && "ring-2 ring-primary ring-offset-2")}>
+                <div className={cn("rounded-lg p-2", simulationActive && "ring-2 ring-primary ring-offset-2")}>
                   <BarChart
                     data={importanceData}
                     dataKey="value"
                     nameKey="name"
                     fill="var(--chart-1)"
-                    height={192}
+                    height={160}
                     layout="vertical"
                     showGrid={true}
                     showYAxis={true}

@@ -16,6 +16,7 @@ import {
   ChartLegendContent,
   ChartConfig,
 } from '@/components/ui/chart';
+import { cn } from '@/lib/utils';
 
 export function BarChart({
   data,
@@ -28,7 +29,8 @@ export function BarChart({
   showGrid = true,
   showXAxis = true,
   showYAxis = true,
-}: BarChartProps) {
+  className,
+}: BarChartProps & { className?: string }) {
   if (!data || data.length === 0) return null;
 
   const chartConfig = {
@@ -36,7 +38,7 @@ export function BarChart({
   } satisfies ChartConfig;
 
   return (
-    <ChartContainer config={chartConfig} className="min-h-50 w-full">
+    <ChartContainer config={chartConfig} className={cn("w-full aspect-auto h-[180px]", className)}>
       <RechartsBarChart accessibilityLayer data={data} layout={layout}>
         {showGrid && <CartesianGrid vertical={false} stroke="var(--border)" />}
         {showXAxis && (
