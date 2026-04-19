@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Papa from 'papaparse';
 import { analyzeColumns } from '@/lib/preprocess';
+import { validateDataset, mergeValidationIntoUpload } from '@/lib/dataset-validator';
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,17 +27,25 @@ export async function POST(req: NextRequest) {
 
           const analysis = analyzeColumns(columns, rawData);
 
-          resolve(NextResponse.json({
+          // Validate dataset for customer analytics suitability
+          const validation = validateDataset(columns, analysis.columnAnalysis, rawData.length);
+
+          const uploadResult = {
             originalColumns: columns,
             columns: analysis.cleanedColumns,
             rowCount: rawData.length,
             cleanedRowCount: analysis.cleanedData.length,
             preview: rawData.slice(0, 5),
             cleanedPreview: analysis.cleanedData.slice(0, 5),
-            cleanedData: analysis.cleanedData, // Full dataset for training
+            cleanedData: analysis.cleanedData,
             columnAnalysis: analysis.columnAnalysis,
             droppedColumns: analysis.droppedColumns,
-          }));
+          };
+
+          // Merge validation results
+          const result = mergeValidationIntoUpload(uploadResult, validation);
+
+          resolve(NextResponse.json(result));
         },
         error: (error: Error) => {
           resolve(NextResponse.json(

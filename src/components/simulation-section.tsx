@@ -16,6 +16,7 @@ interface SimulationSectionProps {
   simulatedResult?: SimulationResult;
   onSimulate?: () => void;
   onReset?: () => void;
+  onApply?: () => void;
 }
 
 export function SimulationSection({
@@ -24,6 +25,7 @@ export function SimulationSection({
   simulatedResult,
   onSimulate,
   onReset,
+  onApply,
 }: SimulationSectionProps) {
   const isSimulated = !!simulatedResult;
   const result = simulatedResult || null;
@@ -62,10 +64,15 @@ export function SimulationSection({
                 Run Simulation
               </Button>
             ) : (
-              <Button variant="outline" onClick={onReset} size="sm">
-                <RefreshCwIcon className="size-4 mr-2" data-icon="inline-start" />
-                Reset
-              </Button>
+              <>
+                <Button onClick={onApply} size="sm" variant="default">
+                  Apply Simulation
+                </Button>
+                <Button variant="outline" onClick={onReset} size="sm">
+                  <RefreshCwIcon className="size-4 mr-2" data-icon="inline-start" />
+                  Reset
+                </Button>
+              </>
             )}
           </div>
         </div>

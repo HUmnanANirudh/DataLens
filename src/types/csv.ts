@@ -4,6 +4,7 @@ export interface ColumnAnalysis {
   uniqueValues: number;
   nullCount: number;
   sample: string[];
+  variance?: number;
 }
 
 export interface PreprocessResult {
@@ -11,6 +12,20 @@ export interface PreprocessResult {
   cleanedData: Record<string, string>[];
   columnAnalysis: ColumnAnalysis[];
   droppedColumns: { name: string; reason: string }[];
+}
+
+export interface DatasetValidationResult {
+  isValid: boolean;
+  isCustomerDataset: boolean;
+  score: number;
+  reasons: string[];
+  signals: {
+    hasCustomerId: boolean;
+    hasTarget: boolean;
+    hasBehavior: boolean;
+    hasTime: boolean;
+  };
+  suggestions: string[];
 }
 
 export interface UploadResult {
@@ -23,6 +38,7 @@ export interface UploadResult {
   cleanedData: Record<string, string>[];
   columnAnalysis: ColumnAnalysis[];
   droppedColumns: { name: string; reason: string }[];
+  datasetValidation?: DatasetValidationResult;
 }
 
 export interface DatasetChartsProps {

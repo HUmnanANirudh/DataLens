@@ -1,5 +1,12 @@
 import { ColumnAnalysis, PreprocessResult } from '@/types';
 
+function calculateVariance(values: number[]): number {
+  if (values.length < 2) return 0;
+  const mean = values.reduce((a, b) => a + b, 0) / values.length;
+  const squaredDiffs = values.map(v => Math.pow(v - mean, 2));
+  return squaredDiffs.reduce((a, b) => a + b, 0) / values.length;
+}
+
 export function analyzeColumns(
   columns: string[],
   data: Record<string, string>[],
@@ -33,6 +40,7 @@ export function analyzeColumns(
     const datePattern = /^\d{4}-\d{2}-\d{2}|^\d{1,2}\/\d{1,2}\/\d{2,4}/;
 
     const sample = nonEmptyValues.slice(0, 10);
+    let variance: number | undefined;
 
     if (nonEmptyValues.length > 0) {
       const allNumeric = sample.every((v) => numericPattern.test(v));
@@ -40,6 +48,9 @@ export function analyzeColumns(
 
       if (allNumeric) {
         type = 'numeric';
+        // Calculate variance for numeric columns
+        const numericValues = nonEmptyValues.map(Number).filter(n => !isNaN(n));
+        variance = calculateVariance(numericValues);
       } else if (allDates) {
         type = 'date';
       }
@@ -51,6 +62,7 @@ export function analyzeColumns(
       uniqueValues,
       nullCount,
       sample: sample.slice(0, 5),
+      variance,
     });
 
     cleanedColumns.push(col);

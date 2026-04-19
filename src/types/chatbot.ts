@@ -1,7 +1,15 @@
+export interface ChartContextType {
+  chartType: string;
+  feature?: string;
+  value?: number;
+  description?: string;
+}
+
 export interface ChatBotProps {
   isOpen: boolean;
   onClose: () => void;
   context?: ChatContext;
+  chartContext?: ChartContextType;
 }
 
 export interface ChatContext {
