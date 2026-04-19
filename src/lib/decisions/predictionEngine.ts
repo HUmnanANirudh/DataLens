@@ -243,6 +243,7 @@ export function generatePredictionsBasedDecisions(
       id: 'retention-campaign',
       title: `Retention Campaign: ${churnAnalysis.highRiskCount.toLocaleString()} High-Risk Customers`,
       description: `Launch targeted retention for customers with >70% churn probability`,
+      confidence: 0.82,
       expectedImpact: {
         delta: -15,
         metric: 'churn_rate',
@@ -264,6 +265,7 @@ export function generatePredictionsBasedDecisions(
         id: 'contract-migration',
         title: 'Accelerate Contract Migration to Annual',
         description: 'Incentivize high-risk customers to switch to annual billing',
+        confidence: 0.72,
         expectedImpact: {
           delta: -12,
           metric: 'churn_rate',
@@ -291,6 +293,7 @@ export function generatePredictionsBasedDecisions(
         id: 'engagement-boost',
         title: 'Re-engagement Campaign for Inactive Customers',
         description: 'Target dormant high-risk customers with personalized outreach',
+        confidence: 0.68,
         expectedImpact: {
           delta: 10,
           metric: 'retention',
@@ -314,6 +317,7 @@ export function generatePredictionsBasedDecisions(
       id: 'vip-upsell',
       title: `Upsell Medium-Risk Customers to Premium Tier`,
       description: `Target ${churnAnalysis.mediumRiskCount.toLocaleString()} medium-risk customers with premium offerings`,
+      confidence: 0.62,
       expectedImpact: {
         delta: 25,
         metric: 'LTV',
@@ -337,6 +341,7 @@ export function generatePredictionsBasedDecisions(
       id: 'pricing-optimization',
       title: 'Implement Value-Based Pricing',
       description: 'Strategic discounts for price-sensitive at-risk segments',
+      confidence: 0.55,
       expectedImpact: {
         delta: -8,
         metric: 'churn_rate',

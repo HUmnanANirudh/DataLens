@@ -1,15 +1,15 @@
-import { Dataset } from '@/types';
+import { Dataset,EncodingMaps,ScalerParams } from '@/types';
 
-interface EncodingMaps {
-  [column: string]: { [value: string]: number };
-}
 
 export function prepareDataset(
   data: Record<string, string>[],
   columns: string[],
-  targetColumn: string
-): { dataset: Dataset; encodingMaps: EncodingMaps } {
-  const encodingMaps: EncodingMaps = {};
+  targetColumn: string,
+  providedEncodingMaps?: EncodingMaps,
+  providedScalerParams?: ScalerParams
+): { dataset: Dataset; encodingMaps: EncodingMaps; scalerParams: ScalerParams } {
+  const encodingMaps: EncodingMaps = providedEncodingMaps ?? {};
+  const scalerParams: ScalerParams = providedScalerParams ?? { mins: [], maxs: [] };
   const featureIndices: string[] = columns.filter((c) => c !== targetColumn);
 
   // Filter out rows with empty target values
@@ -22,6 +22,7 @@ export function prepareDataset(
     return {
       dataset: { features: [], labels: [], featureNames: featureIndices },
       encodingMaps,
+      scalerParams,
     };
   }
 
@@ -83,13 +84,17 @@ export function prepareDataset(
     labels = numericValues.map((v) => (v > median ? 1 : 0));
   }
 
+  // Normalize using provided or computed scaler params
+  const normalizedFeatures = normalizeFeatures(features, scalerParams);
+
   return {
     dataset: {
-      features: normalizeFeatures(features),
+      features: normalizedFeatures,
       labels,
       featureNames: featureIndices,
     },
     encodingMaps,
+    scalerParams,
   };
 }
 
@@ -99,26 +104,29 @@ function getMedian(values: number[]): number {
   return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
-function normalizeFeatures(features: number[][]): number[][] {
+function normalizeFeatures(features: number[][], scalerParams: ScalerParams): number[][] {
   if (features.length === 0) return features;
 
   const numFeatures = features[0].length;
-  const mins: number[] = new Array(numFeatures).fill(Infinity);
-  const maxs: number[] = new Array(numFeatures).fill(-Infinity);
 
-  // Find min/max for each feature
-  for (const row of features) {
-    for (let i = 0; i < numFeatures; i++) {
-      mins[i] = Math.min(mins[i], row[i]);
-      maxs[i] = Math.max(maxs[i], row[i]);
+  // If scalerParams not provided, compute from data
+  if (scalerParams.mins.length === 0 || scalerParams.maxs.length === 0) {
+    scalerParams.mins = new Array(numFeatures).fill(Infinity);
+    scalerParams.maxs = new Array(numFeatures).fill(-Infinity);
+
+    for (const row of features) {
+      for (let i = 0; i < numFeatures; i++) {
+        scalerParams.mins[i] = Math.min(scalerParams.mins[i], row[i]);
+        scalerParams.maxs[i] = Math.max(scalerParams.maxs[i], row[i]);
+      }
     }
   }
 
-  // Normalize to [0, 1]
+  // Normalize to [0, 1] using pre-computed mins/maxs
   return features.map((row) =>
     row.map((val, i) => {
-      const range = maxs[i] - mins[i];
-      return range === 0 ? 0 : (val - mins[i]) / range;
+      const range = scalerParams.maxs[i] - scalerParams.mins[i];
+      return range === 0 ? 0 : (val - scalerParams.mins[i]) / range;
     })
   );
 }

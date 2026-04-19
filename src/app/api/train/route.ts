@@ -15,8 +15,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Prepare dataset
-    const { dataset } = prepareDataset(data, columns, targetColumn);
+    // Prepare dataset (Layer 2 - Feature Engineering, single source of truth)
+    const { dataset, encodingMaps, scalerParams } = prepareDataset(data, columns, targetColumn);
 
     if (dataset.features.length === 0) {
       return NextResponse.json(
@@ -36,13 +36,16 @@ export async function POST(req: NextRequest) {
         name: result.bestModel.config.name,
         type: result.bestModel.config.type,
         evaluation: result.bestModel.evaluation,
-        // Model data for inference
-        weights: result.bestModel.weights,
-        featureImportances: result.bestModel.featureImportances,
+        modelData: {
+          weights: result.bestModel.weights,
+          trees: result.bestModel.trees,
+          featureImportances: result.bestModel.featureImportances,
+        },
       },
       totalModels: result.allModels.length,
-      // Feature info for decisions
       featureNames: dataset.featureNames,
+      encodingMaps,
+      scalerParams,
     });
   } catch (error) {
     console.error('Training error:', error);

@@ -5,7 +5,7 @@ import { predict, PredictionResult } from '@/lib/ml/predict';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { data, columns, targetColumn, modelType, weights, featureImportances } = body;
+    const { data, columns, targetColumn, modelType, modelData, encodingMaps, scalerParams } = body;
 
     if (!data || !columns || !targetColumn) {
       return NextResponse.json(
@@ -14,15 +14,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!modelType || (!weights && !featureImportances)) {
+    if (!modelType || !modelData) {
       return NextResponse.json(
         { error: 'Missing model data' },
         { status: 400 }
       );
     }
 
-    // Prepare dataset (same as training)
-    const { dataset } = prepareDataset(data, columns, targetColumn);
+    // Prepare dataset using training-time encoding maps and scaler params
+    const { dataset } = prepareDataset(data, columns, targetColumn, encodingMaps, scalerParams);
 
     if (dataset.features.length === 0) {
       return NextResponse.json(
@@ -31,9 +31,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Run prediction
-    const modelData = { type: modelType, weights, featureImportances };
-    const result: PredictionResult = predict(modelData, dataset.features);
+    // Run prediction using modelData from training
+    const model = { type: modelType, ...modelData };
+    const result: PredictionResult = predict(model, dataset.features);
 
     // Calculate summary statistics
     const total = result.probabilities.length;
@@ -71,6 +71,6 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
   return NextResponse.json({
-    message: 'Prediction endpoint - POST with { data, columns, targetColumn, modelType, weights, featureImportances }',
+    message: 'Prediction endpoint - POST with { data, columns, targetColumn, modelType, modelData, encodingMaps, scalerParams }',
   });
 }

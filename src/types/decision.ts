@@ -2,6 +2,7 @@ export interface Action {
   id: string;
   title: string;
   description: string;
+  confidence: number;
   expectedImpact: {
     delta: number;
     metric: 'churn_rate' | 'LTV' | 'conversion_rate' | 'retention';

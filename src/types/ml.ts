@@ -38,6 +38,12 @@ export interface XGBoostTree {
   weight: number;
 }
 
+export interface ModelData {
+  weights?: number[];
+  trees?: DecisionTree[];
+  featureImportances?: number[];
+}
+
 export interface ModelSelectionResult {
   bestModel: TrainedModel;
   allModels: TrainedModel[];
@@ -54,7 +60,7 @@ export interface ModelResult {
   name: string;
   type: string;
   evaluation: ModelEvaluation;
-  featureImportances?: number[];
+  modelData?: ModelData;
 }
 
 export interface TrainingResult {
@@ -62,6 +68,8 @@ export interface TrainingResult {
   leaderboard: { name: string; f1: number }[];
   bestModel: ModelResult;
   totalModels: number;
+  encodingMaps?: Record<string, Record<string, number>>;
+  scalerParams?: { mins: number[]; maxs: number[] };
 }
 
 export interface ModelChartsProps {
@@ -73,7 +81,14 @@ export interface BestModel {
   name: string;
   type: string;
   evaluation: { accuracy: number; f1: number; precision: number; recall: number };
-  weights?: number[];
-  featureImportances?: number[];
-  trees?: DecisionTree[];
+  modelData?: ModelData;
+}
+
+export interface EncodingMaps {
+  [column: string]: { [value: string]: number };
+}
+
+export interface ScalerParams {
+  mins: number[];
+  maxs: number[];
 }

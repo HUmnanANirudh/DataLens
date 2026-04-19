@@ -103,7 +103,7 @@ export default function Home() {
       setTrainingResult(data);
 
       // Automatically run prediction
-      await handlePredict(data.bestModel, data.featureNames);
+      await handlePredict(data.bestModel, data.featureNames, data.encodingMaps, data.scalerParams);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Training failed');
     } finally {
@@ -111,7 +111,7 @@ export default function Home() {
     }
   };
 
-  const handlePredict = async (bestModel: BestModel, featureNames?: string[]) => {
+  const handlePredict = async (bestModel: BestModel, featureNames?: string[], encodingMaps?: Record<string, Record<string, number>>, scalerParams?: { mins: number[]; maxs: number[] }) => {
     if (!uploadResult || !targetColumn) return;
 
     setPredicting(true);
@@ -125,8 +125,9 @@ export default function Home() {
           columns: uploadResult.columns,
           targetColumn,
           modelType: bestModel.type,
-          weights: bestModel.weights,
-          featureImportances: bestModel.featureImportances,
+          modelData: bestModel.modelData,
+          encodingMaps,
+          scalerParams,
         }),
       });
 
@@ -142,7 +143,7 @@ export default function Home() {
       });
 
       // Automatically run decision engine with both predictions and summary
-      await handleDecide(data.predictions, data.summary, bestModel.featureImportances, featureNames || uploadResult.columns);
+      await handleDecide(data.predictions, data.summary, bestModel.modelData?.featureImportances, featureNames || uploadResult.columns);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Prediction failed');
     } finally {
@@ -165,7 +166,7 @@ export default function Home() {
         body: JSON.stringify({
           predictions,
           summary,
-          featureImportances: featureImportances || trainingResult?.bestModel.featureImportances,
+          featureImportances: featureImportances || trainingResult?.bestModel.modelData?.featureImportances,
           featureNames: featureNames || trainingResult?.featureNames,
         }),
       });
