@@ -6,14 +6,9 @@ import { ModelCharts } from '@/components/ModelCharts';
 import { DatasetCharts } from '@/components/DatasetCharts';
 import { Decisions, SimulationModal } from '@/components/decisions';
 import { calculateBaseline } from '@/lib/decisions/simulation';
-
-interface BestModel {
-  name: string;
-  type: string;
-  evaluation: { accuracy: number; f1: number; precision: number; recall: number };
-  weights?: number[];
-  featureImportances?: number[];
-}
+import { ChatBot } from '@/components/ChatBot';
+import { MessageSquareIcon } from 'lucide-react';
+import { BestModel } from '@/types';
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -38,6 +33,9 @@ export default function Home() {
   // Simulation state
   const [selectedAction, setSelectedAction] = useState<Action | null>(null);
   const [baseline, setBaseline] = useState<BaselineMetrics | null>(null);
+
+  // Chat state
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const handleUpload = async () => {
     if (!file) return;
@@ -428,6 +426,14 @@ export default function Home() {
           onClose={closeSimulation}
         />
       )}
+      <ChatBot isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+      <button
+        onClick={() => setIsChatOpen(true)}
+        className="fixed bottom-6 right-6 p-4 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg z-30 transition-all hover:scale-105"
+        aria-label="Open chat"
+      >
+        <MessageSquareIcon className="size-6" />
+      </button>
     </div>
   );
 }

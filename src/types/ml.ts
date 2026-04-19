@@ -63,3 +63,11 @@ export interface ModelChartsProps {
   trainingResult: TrainingResult;
   columns: string[];
 }
+
+export interface BestModel {
+  name: string;
+  type: string;
+  evaluation: { accuracy: number; f1: number; precision: number; recall: number };
+  weights?: number[];
+  featureImportances?: number[];
+}

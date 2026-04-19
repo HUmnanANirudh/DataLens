@@ -3,3 +3,4 @@ export * from './ml';
 export * from './charts';
 export * from './decision';
 export * from './prediction';
+export * from './chatbot';
