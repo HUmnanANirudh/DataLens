@@ -71,13 +71,14 @@ Transforms model outputs into actions.
 
 #### Output:
 
-Action {
+- Action {
     id
     title
     expectedImpact { delta, metric, confidence }
     affectedUsers
     reasoning[]
 }
+
 ---
 
 ### 4. Action Scoring
