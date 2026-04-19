@@ -142,11 +142,7 @@ export function generateDecisions(
 
   // Score and rank actions
   const scoredActions = scoreActions(actions);
-  const top3Actions = scoredActions.slice(0, 3).map(sa => ({
-    ...sa,
-    score: undefined as unknown as number,
-    breakdown: undefined as unknown as { impact: number; confidence: number; coverage: number },
-  })) as Action[];
+  const top3Actions = scoredActions.slice(0, 3);
 
   return {
     actions: scoredActions,

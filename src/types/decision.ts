@@ -25,7 +25,7 @@ export interface ScoredAction extends Action {
 
 export interface DecisionEngineResult {
   actions: ScoredAction[];
-  top3Actions: Action[];
+  top3Actions: ScoredAction[];
   summary: {
     totalActionsConsidered: number;
     primaryRecommendation: string;

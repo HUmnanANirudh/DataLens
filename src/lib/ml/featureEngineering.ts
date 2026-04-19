@@ -49,13 +49,22 @@ export function prepareDataset(
         const num = parseFloat(value);
         featureRow.push(isNaN(num) ? 0 : num);
       } else {
+        // During prediction with provided maps, use fallback for unknown categories
         if (!encodingMaps[col]) {
           encodingMaps[col] = {};
         }
         if (!(value in encodingMaps[col])) {
-          encodingMaps[col][value] = Object.keys(encodingMaps[col]).length;
+          // If encoding maps were provided (prediction time), unknown categories get fallback 0
+          // If encoding maps were NOT provided (training time), add new category
+          if (providedEncodingMaps && providedEncodingMaps[col]) {
+            featureRow.push(0); // Unknown category fallback
+          } else {
+            encodingMaps[col][value] = Object.keys(encodingMaps[col]).length;
+            featureRow.push(encodingMaps[col][value]);
+          }
+        } else {
+          featureRow.push(encodingMaps[col][value]);
         }
-        featureRow.push(encodingMaps[col][value]);
       }
     }
 
