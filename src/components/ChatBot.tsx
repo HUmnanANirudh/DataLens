@@ -21,6 +21,7 @@ import {
   PromptInputTextarea,
   PromptInputSubmit,
   PromptInputFooter,
+  PromptInputMessage,
 } from './ai-elements/prompt-input';
 import {
   Sheet,
@@ -44,13 +45,12 @@ export function ChatBot({ isOpen, onClose }: ChatBotProps) {
   });
 
   const handleSubmit = useCallback(
-    (e: React.SyntheticEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      if (!input.trim()) return;
-      sendMessage({ text: input });
+    (message: PromptInputMessage) => {
+      if (!message.text.trim()) return;
+      sendMessage({ text: message.text });
       setInput('');
     },
-    [input, sendMessage, setInput]
+    [sendMessage, setInput]
   );
 
   const handleCopy = useCallback(async (text: string, id: string) => {
@@ -112,23 +112,21 @@ export function ChatBot({ isOpen, onClose }: ChatBotProps) {
           </Conversation>
         </div>
         <div className="border-t p-4">
-          <form onSubmit={handleSubmit}>
-            <PromptInput onSubmit={() => {}} className="w-full">
-              <PromptInputBody>
-                <PromptInputTextarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask about your data..."
-                  className="flex-1"
-                />
-              </PromptInputBody>
-              <PromptInputFooter>
-                <div className="flex justify-end">
-                  <PromptInputSubmit status={status} />
-                </div>
-              </PromptInputFooter>
-            </PromptInput>
-          </form>
+          <PromptInput onSubmit={handleSubmit} className="w-full">
+            <PromptInputBody>
+              <PromptInputTextarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask about your data..."
+                className="flex-1"
+              />
+            </PromptInputBody>
+            <PromptInputFooter>
+              <div className="flex justify-end">
+                <PromptInputSubmit status={status} />
+              </div>
+            </PromptInputFooter>
+          </PromptInput>
         </div>
       </SheetContent>
     </Sheet>
