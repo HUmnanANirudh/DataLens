@@ -1,7 +1,7 @@
 'use client';
 
 import { ScoredAction } from '@/types';
-import { ActionCard } from '@/components/ui/action-card';
+import { ActionCard } from '@/components/action-card';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,9 @@ interface ActionSectionProps {
   top3Actions: ScoredAction[];
   churnAnalysis: {
     highRiskCount: number;
+    highRiskPercentage: number;
     mediumRiskCount: number;
+    mediumRiskPercentage: number;
     lowRiskCount: number;
     churnRiskDrivers: { feature: string; importance: number }[];
   };

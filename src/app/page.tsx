@@ -3,9 +3,9 @@
 import { useState, useCallback } from 'react';
 import { UploadResult, TrainingResult, DecisionEngineResult, ChurnAnalysis, Action, BaselineMetrics, PredictionResult, BestModel, ScoredAction, ChatContext } from '@/types';
 import { DatasetCharts } from '@/components/DatasetCharts';
-import { ActionSection } from '@/components/ui/action-section';
-import { EvidenceCharts } from '@/components/ui/evidence-charts';
-import { SimulationSection } from '@/components/ui/simulation-section';
+import { ActionSection } from '@/components/action-section';
+import { EvidenceCharts } from '@/components/evidence-charts';
+import { SimulationSection } from '@/components/simulation-section';
 import { calculateBaseline } from '@/lib/decisions/simulation';
 import { ChatBot } from '@/components/ChatBot';
 import { MessageSquareIcon } from 'lucide-react';
