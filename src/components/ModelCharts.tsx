@@ -23,7 +23,7 @@ export function ModelCharts({ trainingResult, columns }: ModelChartsProps) {
   ];
 
   // Feature importance data
-  const importanceData = bestModel.featureImportances
+  const importanceData = bestModel.modelData?.featureImportances
     ?.map((imp, i) => ({
       name: columns[i] || `Feature ${i + 1}`,
       value: imp,

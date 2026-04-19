@@ -6,13 +6,15 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
 } from 'recharts';
 
 import { LineChartProps } from '@/types';
-
-const DEFAULT_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444'];
+import {
+  ChartContainer,
+  ChartTooltipContent,
+  ChartLegendContent,
+  ChartConfig,
+} from '@/components/ui/chart';
 
 export function LineChart({
   data,
@@ -25,28 +27,50 @@ export function LineChart({
 }: LineChartProps) {
   if (!data || data.length === 0 || !lines || lines.length === 0) return null;
 
+  const chartConfig = lines.reduce((acc, line, index) => {
+    const colorVar = `var(--chart-${index + 1})`;
+    acc[line.dataKey] = {
+      label: line.dataKey,
+      color: colorVar,
+    };
+    return acc;
+  }, {} as ChartConfig);
+
   return (
-    <ResponsiveContainer width="100%" height={height}>
-      <RechartsLineChart data={data}>
-        {showGrid && <CartesianGrid strokeDasharray="3 3" stroke="#374151" />}
-        <XAxis dataKey={xAxisKey} stroke="#9CA3AF" tick={{ fontSize: 10 }} />
-        <YAxis stroke="#9CA3AF" />
-        <Tooltip
-          contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px' }}
-          labelStyle={{ color: '#F9FAFB' }}
+    <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+      <RechartsLineChart accessibilityLayer data={data}>
+        {showGrid && <CartesianGrid vertical={false} stroke="var(--border)" />}
+        <XAxis
+          dataKey={xAxisKey}
+          stroke="var(--muted-foreground)"
+          tickLine={false}
+          tickMargin={10}
+          axisLine={false}
+          tickFormatter={(value) => String(value).slice(0, 3)}
         />
-        {lines.map((line, index) => (
+        <YAxis
+          stroke="var(--muted-foreground)"
+          tickLine={false}
+          tickMargin={10}
+          axisLine={false}
+        />
+        <ChartTooltipContent
+          indicator="line"
+          formatter={(value) => [value]}
+        />
+        <ChartLegendContent />
+        {lines.map((line) => (
           <Line
             key={line.dataKey}
             type="monotone"
             dataKey={line.dataKey}
-            stroke={line.stroke || DEFAULT_COLORS[index % DEFAULT_COLORS.length]}
+            stroke={`var(--color-${line.dataKey})`}
             strokeWidth={strokeWidth}
-            fill={line.fill || DEFAULT_COLORS[index % DEFAULT_COLORS.length]}
+            fill={`var(--color-${line.dataKey})`}
             fillOpacity={fillArea ? 0.3 : 0}
           />
         ))}
       </RechartsLineChart>
-    </ResponsiveContainer>
+    </ChartContainer>
   );
 }

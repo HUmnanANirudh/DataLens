@@ -6,18 +6,22 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
 } from 'recharts';
 
 import { BarChartProps } from '@/types';
+import {
+  ChartContainer,
+  ChartTooltipContent,
+  ChartLegendContent,
+  ChartConfig,
+} from '@/components/ui/chart';
 
 export function BarChart({
   data,
   dataKey,
   nameKey = 'name',
   layout = 'horizontal',
-  fill = '#3B82F6',
+  fill = 'var(--chart-1)',
   height = 256,
   domain = [0, 'auto'],
   formatter,
@@ -27,16 +31,23 @@ export function BarChart({
 }: BarChartProps) {
   if (!data || data.length === 0) return null;
 
+  const chartConfig = {
+    [dataKey]: { label: nameKey, color: fill },
+  } satisfies ChartConfig;
+
   return (
-    <ResponsiveContainer width="100%" height={height}>
-      <RechartsBarChart data={data} layout={layout}>
-        {showGrid && <CartesianGrid strokeDasharray="3 3" stroke="#374151" />}
+    <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+      <RechartsBarChart accessibilityLayer data={data} layout={layout}>
+        {showGrid && <CartesianGrid vertical={false} stroke="var(--border)" />}
         {showXAxis && (
           <XAxis
             type={layout === 'vertical' ? 'number' : 'category'}
             dataKey={layout === 'vertical' ? undefined : nameKey}
-            stroke="#9CA3AF"
-            tick={{ fontSize: 11 }}
+            stroke="var(--muted-foreground)"
+            tickLine={false}
+            tickMargin={10}
+            axisLine={false}
+            tickFormatter={(value) => String(value).slice(0, 3)}
           />
         )}
         {showYAxis && (
@@ -45,16 +56,19 @@ export function BarChart({
             dataKey={layout === 'vertical' ? nameKey : undefined}
             domain={domain}
             tickFormatter={formatter}
-            stroke="#9CA3AF"
+            stroke="var(--muted-foreground)"
+            tickLine={false}
+            tickMargin={10}
+            axisLine={false}
           />
         )}
-        <Tooltip
-          formatter={(value) => [formatter ? formatter(Number(value)) : value]}
-          contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px' }}
-          labelStyle={{ color: '#F9FAFB' }}
+        <ChartTooltipContent
+          formatter={(value) => [formatter ? formatter(Number(value)) : value, nameKey]}
+          indicator="dot"
         />
-        <Bar dataKey={dataKey} fill={fill} radius={[0, 4, 4, 0]} />
+        <ChartLegendContent />
+        <Bar dataKey={dataKey} fill={`var(--color-${dataKey})`} radius={[0, 4, 4, 0]} />
       </RechartsBarChart>
-    </ResponsiveContainer>
+    </ChartContainer>
   );
 }

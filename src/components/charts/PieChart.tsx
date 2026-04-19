@@ -4,27 +4,39 @@ import {
   PieChart as RechartsPieChart,
   Pie,
   Cell,
-  Tooltip,
-  ResponsiveContainer,
 } from 'recharts';
 
 import { PieChartProps } from '@/types';
+import {
+  ChartContainer,
+  ChartTooltipContent,
+  ChartLegendContent,
+  ChartConfig,
+} from '@/components/ui/chart';
 
-const DEFAULT_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444', '#06B6D4'];
+const COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)'] as const;
 
 export function PieChart({
   data,
   dataKey,
   nameKey = 'name',
-  colors = DEFAULT_COLORS,
   height = 256,
   showLabels = true,
 }: PieChartProps) {
   if (!data || data.length === 0) return null;
 
+  const chartConfig: ChartConfig = {};
+  data.forEach((item, index) => {
+    const key = String(item[nameKey] || index);
+    chartConfig[key] = {
+      label: key,
+      color: COLORS[index % COLORS.length],
+    };
+  });
+
   return (
-    <ResponsiveContainer width="100%" height={height}>
-      <RechartsPieChart>
+    <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+      <RechartsPieChart accessibilityLayer>
         <Pie
           data={data}
           cx="50%"
@@ -35,18 +47,21 @@ export function PieChart({
           }
           nameKey={nameKey}
           outerRadius={80}
-          fill="#8884d8"
           dataKey={dataKey}
         >
           {data.map((_, index) => (
-            <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+            <Cell
+              key={`cell-${index}`}
+              fill={`var(--color-${String(data[index]?.[nameKey] || index)})`}
+            />
           ))}
         </Pie>
-        <Tooltip
+        <ChartTooltipContent
+          indicator="dot"
           formatter={(value) => [value]}
-          contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px' }}
         />
+        <ChartLegendContent />
       </RechartsPieChart>
-    </ResponsiveContainer>
+    </ChartContainer>
   );
 }
