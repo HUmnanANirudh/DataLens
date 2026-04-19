@@ -33,6 +33,11 @@ export interface DecisionTree {
   value?: number;
 }
 
+export interface XGBoostTree {
+  tree: DecisionTree;
+  weight: number;
+}
+
 export interface ModelSelectionResult {
   bestModel: TrainedModel;
   allModels: TrainedModel[];
@@ -70,4 +75,5 @@ export interface BestModel {
   evaluation: { accuracy: number; f1: number; precision: number; recall: number };
   weights?: number[];
   featureImportances?: number[];
+  trees?: DecisionTree[];
 }

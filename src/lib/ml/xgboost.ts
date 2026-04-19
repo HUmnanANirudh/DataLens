@@ -53,6 +53,8 @@ export function trainXGBoost(
       type: 'xgboost',
     },
     evaluation,
+    trees: trees.map(t => t.tree),
+    featureImportances: trees.map(() => 1 / numTrees),
   };
 }
 

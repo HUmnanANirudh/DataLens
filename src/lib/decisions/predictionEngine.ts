@@ -218,12 +218,12 @@ function getRecommendedActionsForSegment(
   return actions;
 }
 
-function createFeatureImpactMap(model: TrainedModel, featureNames: string[]): Map<string, number> {
+function createFeatureImpactMap(model: TrainedModel, featureNames: string[]): Record<string, number> {
   const importance = model.featureImportances || model.weights || [];
-  const map = new Map<string, number>();
+  const map: Record<string, number> = {};
 
   for (let i = 0; i < featureNames.length; i++) {
-    map.set(featureNames[i], Math.abs(importance[i] || 0));
+    map[featureNames[i]] = Math.abs(importance[i] || 0);
   }
 
   return map;

@@ -25,14 +25,6 @@ export interface UploadResult {
   droppedColumns: { name: string; reason: string }[];
 }
 
-export interface UploadResult {
-  columns: string[];
-  rowCount: number;
-  cleanedRowCount: number;
-  columnAnalysis: ColumnAnalysis[];
-  cleanedPreview: Record<string, string>[];
-}
-
 export interface DatasetChartsProps {
   uploadResult: UploadResult;
 }

@@ -1,4 +1,4 @@
-import { Dataset } from '@/types/ml';
+import { DecisionTree } from '@/types';
 
 export interface PredictionResult {
   probabilities: number[];
@@ -7,7 +7,12 @@ export interface PredictionResult {
 }
 
 export function predict(
-  modelData: { type: string; weights?: number[]; featureImportances?: number[] },
+  modelData: {
+    type: string;
+    weights?: number[];
+    featureImportances?: number[];
+    trees?: DecisionTree[];
+  },
   features: number[][]
 ): PredictionResult {
   const probabilities: number[] = [];
@@ -25,7 +30,12 @@ export function predict(
 }
 
 function predictProbability(
-  modelData: { type: string; weights?: number[]; featureImportances?: number[] },
+  modelData: {
+    type: string;
+    weights?: number[];
+    featureImportances?: number[];
+    trees?: DecisionTree[];
+  },
   features: number[]
 ): number {
   // Logistic Regression
@@ -37,14 +47,22 @@ function predictProbability(
     return sigmoid(sum);
   }
 
-  // Tree-based models - use feature importances as a rough probability
+  // Tree-based models with actual trees - use tree traversal
+  if (modelData.trees && modelData.trees.length > 0) {
+    const votes: number[] = [];
+    for (const tree of modelData.trees) {
+      votes.push(predictTree(tree, features));
+    }
+    // Average probability across all trees
+    return votes.reduce((sum, v) => sum + v, 0) / votes.length;
+  }
+
+  // Fallback: use feature importances as weighted sum
   if (modelData.featureImportances && modelData.featureImportances.length > 0) {
     let score = 0;
     for (let i = 0; i < features.length; i++) {
-      // Feature importance weighted by normalized feature value
       score += features[i] * (modelData.featureImportances[i] || 0);
     }
-    // Normalize score to 0-1 range
     const maxPossible = modelData.featureImportances.reduce((sum, imp) => sum + imp, 0);
     if (maxPossible > 0) {
       return Math.min(1, Math.max(0, score / maxPossible));
@@ -52,6 +70,18 @@ function predictProbability(
   }
 
   return 0.5;
+}
+
+function predictTree(tree: DecisionTree, features: number[]): number {
+  if (tree.prediction !== undefined) {
+    return tree.prediction;
+  }
+
+  if (features[tree.featureIndex] <= tree.threshold) {
+    return tree.left ? predictTree(tree.left, features) : 0;
+  } else {
+    return tree.right ? predictTree(tree.right, features) : 0;
+  }
 }
 
 function sigmoid(x: number): number {

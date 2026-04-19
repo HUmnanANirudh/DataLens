@@ -53,7 +53,7 @@ export interface PredictionDrivenAnalysis {
   predictions: CustomerPrediction[];
   churnAnalysis: ChurnAnalysis;
   segmentProfiles: SegmentProfile[];
-  featureImpactMap: Map<string, number>;
+  featureImpactMap: Record<string, number>;
 }
 
 export interface CustomerPrediction {
