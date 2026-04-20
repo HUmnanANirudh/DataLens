@@ -38,8 +38,13 @@ export function BarChart({
   } satisfies ChartConfig;
 
   return (
-    <ChartContainer config={chartConfig} className={cn("w-full aspect-auto h-45", className)}>
-      <RechartsBarChart accessibilityLayer data={data} layout={layout}>
+    <ChartContainer config={chartConfig} className={cn("w-full aspect-auto h-50", className)}>
+      <RechartsBarChart 
+        accessibilityLayer 
+        data={data} 
+        layout={layout}
+        margin={{ left: layout === 'vertical' ? 20 : 0, right: 20 }}
+      >
         {showGrid && <CartesianGrid vertical={false} stroke="var(--border)" />}
         {showXAxis && (
           <XAxis
@@ -49,7 +54,8 @@ export function BarChart({
             tickLine={false}
             tickMargin={10}
             axisLine={false}
-            tickFormatter={(value) => String(value).slice(0, 3)}
+            fontSize={12}
+            interval={0}
           />
         )}
         {showYAxis && (
@@ -62,11 +68,14 @@ export function BarChart({
             tickLine={false}
             tickMargin={10}
             axisLine={false}
+            width={layout === 'vertical' ? 150 : 40}
+            fontSize={12}
+            interval={0}
           />
         )}
         <ChartTooltip content={<ChartTooltipContent />} />
         <ChartLegendContent />
-        <Bar dataKey={dataKey} fill={`var(--color-${dataKey})`} radius={[0, 4, 4, 0]} />
+        <Bar dataKey={dataKey} fill={fill} radius={layout === 'vertical' ? [0, 4, 4, 0] : [4, 4, 0, 0]} />
       </RechartsBarChart>
     </ChartContainer>
   );

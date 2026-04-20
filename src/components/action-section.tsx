@@ -4,8 +4,6 @@ import { ScoredAction } from '@/types';
 import { ActionCard } from '@/components/action-card';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { FlameIcon, TrendingDownIcon, UsersIcon } from 'lucide-react';
 
 interface ActionSectionProps {
   top3Actions: ScoredAction[];
@@ -54,9 +52,6 @@ export function ActionSection({
     <div className="space-y-6">
       {/* Section Header */}
       <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center size-10 rounded-full bg-orange-500/10">
-          <FlameIcon className="size-5 text-orange-500" />
-        </div>
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Top 3 Actions</h2>
           <p className="text-sm text-muted-foreground">
@@ -65,32 +60,22 @@ export function ActionSection({
         </div>
       </div>
 
-      {/* Key Metrics Banner */}
-      <Card className="bg-muted/50">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-3 gap-6">
+      <Card>
+        <CardContent>
+          <div className="flex items-center justify-between px-4">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center size-10 rounded-full bg-red-500/10">
-                <TrendingDownIcon className="size-5 text-red-500" />
-              </div>
               <div>
                 <p className="text-2xl font-bold">{totalAtRisk.toLocaleString()}</p>
                 <p className="text-xs text-muted-foreground">At-Risk Customers</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center size-10 rounded-full bg-orange-500/10">
-                <UsersIcon className="size-5 text-orange-500" />
-              </div>
               <div>
                 <p className="text-2xl font-bold">{churnAnalysis.highRiskCount.toLocaleString()}</p>
                 <p className="text-xs text-muted-foreground">High Risk ({churnAnalysis.highRiskPercentage?.toFixed(1) || 0}%)</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Badge variant="secondary" className="size-10 rounded-full flex items-center justify-center">
-                <span className="text-sm font-bold">{churnAnalysis.churnRiskDrivers.length}</span>
-              </Badge>
               <div>
                 <p className="text-2xl font-bold">{churnAnalysis.churnRiskDrivers.length}</p>
                 <p className="text-xs text-muted-foreground">Key Drivers Identified</p>

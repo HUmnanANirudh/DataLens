@@ -755,10 +755,6 @@ export default function Home() {
                         <p className="text-2xl font-bold text-blue-400">{(predictionResult.summary.avgProbability * 100).toFixed(1)}%</p>
                         <p className="text-xs text-muted-foreground">Avg Probability</p>
                       </div>
-                      <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3 text-center col-span-2">
-                        <p className="text-2xl font-bold text-purple-400">{predictionResult.summary.total.toLocaleString()}</p>
-                        <p className="text-xs text-muted-foreground">Total Customers</p>
-                      </div>
                     </div>
                   </TabsContent>
                   {simulationResult && (

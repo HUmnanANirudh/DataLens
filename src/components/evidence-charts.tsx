@@ -87,9 +87,8 @@ export function EvidenceCharts({
 
   // Prepare feature importance data
   const importanceData = featureImportances
-    ?.slice(0, 8)
-    .map(f => ({
-      name: f.feature.length > 10 ? f.feature.slice(0, 10) + '...' : f.feature,
+    ?.map(f => ({
+      name: f.feature.length > 20 ? f.feature.slice(0, 20) + '...' : f.feature,
       fullName: f.feature,
       value: Math.round(f.importance * 100),
     })) || [];
@@ -147,6 +146,7 @@ export function EvidenceCharts({
                     dataKey="value"
                     nameKey="name"
                     height={160}
+                    colors={['#ef4444', '#eab308', '#22c55e']}
                   />
                 </div>
                 <ScrollArea className="h-auto">
@@ -212,16 +212,16 @@ export function EvidenceCharts({
                     data={importanceData}
                     dataKey="value"
                     nameKey="name"
-                    fill="var(--chart-1)"
-                    height={160}
+                    fill="var(--chart-2)"
+                    height={Math.max(160, importanceData.length * 30)}
                     layout="vertical"
                     showGrid={true}
                     showYAxis={true}
                     showXAxis={true}
                   />
                 </div>
-                <ScrollArea className="h-auto max-h-48">
-                  <div className="space-y-1 pr-4">
+                <ScrollArea className="h-48 pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pr-4">
                     {importanceData.map((item, index) => (
                       <Popover key={item.name} onOpenChange={(open) => {
                         if (open) setHoveredData({ type: 'drivers', label: item.name, value: item.value, feature: item.fullName });
@@ -233,15 +233,15 @@ export function EvidenceCharts({
                             )}>
                             <span className="text-xs text-muted-foreground w-4">{index + 1}.</span>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">{item.name}</p>
+                              <p className="text-xs font-medium truncate">{item.name}</p>
                             </div>
-                            <span className="text-sm font-mono text-muted-foreground">
+                            <span className="text-xs font-mono text-muted-foreground">
                               {item.value}%
                             </span>
                             {simulationActive ? (
-                              <MessageCircleIcon className="size-4 text-primary" />
+                              <MessageCircleIcon className="size-3.5 text-primary" />
                             ) : (
-                              <MessageCircleIcon className="size-4 opacity-0 group-hover:opacity-50 transition-opacity" />
+                              <MessageCircleIcon className="size-3.5 opacity-0 group-hover:opacity-50 transition-opacity" />
                             )}
                           </PopoverTrigger>
                         <PopoverContent className="w-80" align="start">

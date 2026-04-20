@@ -19,7 +19,7 @@ export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
 
   // Unique Values per Column - Bar Chart
   const uniqueValuesData = columnAnalysis.map((col) => ({
-    name: col.name.length > 12 ? col.name.slice(0, 12) + '…' : col.name,
+    name: col.name.length > 24 ? col.name.slice(0, 24) + '…' : col.name,
     value: col.uniqueValues,
   }));
 
