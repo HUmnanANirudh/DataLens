@@ -180,7 +180,7 @@ export function EvidenceCharts({
                               placeholder="Why is this high?"
                               value={inlineQuestion}
                               onChange={(e) => setInlineQuestion(e.target.value)}
-                              className="min-h-[60px] resize-none text-sm"
+                              className="min-h-15 resize-none text-sm"
                             />
                             <Button size="sm" onClick={handleInlineAsk} disabled={!inlineQuestion.trim()}>
                               <SendIcon className="size-3 mr-2" />
@@ -250,7 +250,7 @@ export function EvidenceCharts({
                               placeholder="Why does this drive churn?"
                               value={inlineQuestion}
                               onChange={(e) => setInlineQuestion(e.target.value)}
-                              className="min-h-[60px] resize-none text-sm"
+                              className="min-h-15 resize-none text-sm"
                             />
                             <Button size="sm" onClick={handleInlineAsk} disabled={!inlineQuestion.trim()}>
                               <SendIcon className="size-3 mr-2" />
