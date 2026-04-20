@@ -41,6 +41,13 @@ export interface ChatContext {
       name: string;
       type: string;
       uniqueValues: number;
+      // Numeric stats
+      min?: number;
+      max?: number;
+      mean?: number;
+      missingPct?: number;
+      // Categorical stats
+      topValues?: Array<{ value: string; count: number; pct: string }>;
     }>;
     isValid: boolean;
     validationScore: number;

@@ -80,8 +80,6 @@ export default function Home() {
     }
 
     const uniqueValues = colAnalysis.uniqueValues;
-    const totalRows = uploadResult.cleanedRowCount;
-    const isChurnLike = /churn|target|label|yes_no|binary/.test(col.toLowerCase());
     const isBinary = uniqueValues === 2;
     const isLowCardinality = uniqueValues <= 5;
     const isHighCardinality = uniqueValues > 10 && colAnalysis.type === 'numeric';
@@ -165,13 +163,52 @@ export default function Home() {
       }
 
       // Set chat context with dataset info (available immediately after upload)
+      // Build enhanced column analysis with stats for chat context
+      const enhancedColumnAnalysis = data.columnAnalysis.map((col: { name: string; type: string; uniqueValues: number; variance?: number }) => {
+        const base = {
+          name: col.name,
+          type: col.type,
+          uniqueValues: col.uniqueValues,
+        };
+
+        if (col.type === 'numeric') {
+          const values = data.cleanedData
+            .map((row: Record<string, string>) => parseFloat(row[col.name]))
+            .filter((v: number) => !isNaN(v));
+          const min = values.length ? values.reduce((a: number, b: number) => Math.min(a, b), values[0]) : 0;
+          const max = values.length ? values.reduce((a: number, b: number) => Math.max(a, b), values[0]) : 0;
+          const mean = values.length ? values.reduce((a: number, b: number) => a + b, 0) / values.length : 0;
+          const missing = data.cleanedData.filter((row: Record<string, string>) => !row[col.name] || row[col.name] === '').length;
+          const missingPct = (missing / data.cleanedData.length) * 100;
+          return { ...base, min, max, mean, missingPct };
+        }
+
+        if (col.type === 'categorical') {
+          const counts: Record<string, number> = {};
+          data.cleanedData.forEach((row: Record<string, string>) => {
+            const value = row[col.name] || '(empty)';
+            counts[value] = (counts[value] || 0) + 1;
+          });
+          const sorted = Object.entries(counts).sort((a: [string, number], b: [string, number]) => b[1] - a[1]).slice(0, 5);
+          const total = Object.values(counts).reduce((a: number, b: number) => a + b, 0);
+          const topValues = sorted.map(([val, count]) => ({
+            value: val.length > 25 ? val.slice(0, 25) + '…' : val,
+            count,
+            pct: ((count / total) * 100).toFixed(1),
+          }));
+          return { ...base, topValues };
+        }
+
+        return base;
+      });
+
       setChatContext({
         datasetInfo: {
           name: file.name,
           rowCount: data.rowCount,
           columnCount: data.columns.length,
           columns: data.columns,
-          columnAnalysis: data.columnAnalysis,
+          columnAnalysis: enhancedColumnAnalysis,
           isValid: data.datasetValidation?.isValid || false,
           validationScore: data.datasetValidation?.score || 0,
           validationReasons: data.datasetValidation?.reasons || [],
@@ -425,11 +462,11 @@ export default function Home() {
 
   return (
     <div className="min-h-screen p-8 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">DataLens - AI Growth Strategy Engine</h1>
+      <h1 className="text-3xl font-bold mb-8">DataLens</h1>
 
       {/* Upload Section */}
       <Card className="mb-8">
-        <CardContent className="pt-6">
+        <CardContent >
           <div className="flex items-center gap-4 flex-wrap">
             <input
               type="file"
@@ -452,7 +489,7 @@ export default function Home() {
 
       {error && (
         <Card className="mb-6 border-destructive">
-          <CardContent className="pt-6">
+          <CardContent>
             <p className="text-destructive">{error}</p>
           </CardContent>
         </Card>
@@ -505,25 +542,25 @@ export default function Home() {
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <Card>
-              <CardContent className="pt-6">
+              <CardContent>
                 <p className="text-xs text-muted-foreground">Columns</p>
                 <p className="text-2xl font-bold">{uploadResult.columns.length}</p>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="pt-6">
+              <CardContent>
                 <p className="text-xs text-muted-foreground">Clean Rows</p>
                 <p className="text-2xl font-bold">{uploadResult.cleanedRowCount.toLocaleString()}</p>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="pt-6">
+              <CardContent>
                 <p className="text-xs text-muted-foreground">Dataset Valid</p>
                 <p className="text-2xl font-bold">{datasetValidation?.isValid ? 'Yes' : 'No'}</p>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="pt-6">
+              <CardContent>
                 <p className="text-xs text-muted-foreground">Status</p>
                 <p className="text-2xl font-bold">{analysisReady ? 'Ready' : 'Pending'}</p>
               </CardContent>
@@ -559,7 +596,6 @@ export default function Home() {
                             return !isIdLike && !isFullyUnique;
                           })
                           .map((col: string) => {
-                            const colAnalysis = uploadResult.columnAnalysis.find((c: { name: string }) => c.name === col);
                             const isChurnLike = /churn|target|label|yes_no|binary/.test(col.toLowerCase());
                             return (
                               <SelectItem key={col} value={col}>

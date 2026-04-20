@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   const systemPrompt = buildSystemPrompt(context);
 
   const result = streamText({
-    model: google('gemini-2.5-flash'),
+    model: google('gemini-2.5-flash-lite'),
     system: systemPrompt,
     messages: coreMessages,
   });
@@ -62,6 +62,42 @@ IMPORTANT: Do NOT use markdown formatting like **bold**, *italics*, bullet lists
 
   if (context.chartData) {
     contextParts.push(`User is asking about: ${context.chartData.type} chart - ${context.chartData.description || 'data point'}`);
+  }
+
+  // Dataset stats - available immediately after upload
+  if (context.datasetInfo) {
+    const di = context.datasetInfo;
+    contextParts.push(`Dataset: ${di.name} with ${di.rowCount.toLocaleString()} rows and ${di.columnCount} columns`);
+    contextParts.push(`Columns: ${di.columns.join(', ')}`);
+
+    // Add numeric column stats
+    const numericCols = di.columnAnalysis.filter(c => c.type === 'numeric');
+    if (numericCols.length > 0) {
+      const numericStats = numericCols.map(c => {
+        if (c.min !== undefined && c.max !== undefined && c.mean !== undefined) {
+          return `${c.name}: min=${c.min.toLocaleString()}, max=${c.max.toLocaleString()}, mean=${c.mean.toLocaleString()}, missing=${c.missingPct?.toFixed(1)}%`;
+        }
+        return `${c.name}: ${c.uniqueValues} unique values`;
+      });
+      contextParts.push(`Numeric columns: ${numericStats.join(' | ')}`);
+    }
+
+    // Add categorical column top values
+    const categoricalCols = di.columnAnalysis.filter(c => c.type === 'categorical');
+    if (categoricalCols.length > 0) {
+      const categoricalStats = categoricalCols.map(c => {
+        if (c.topValues && c.topValues.length > 0) {
+          const topVals = c.topValues.map(t => `${t.value}(${t.pct}%)`).join(', ');
+          return `${c.name}: ${c.uniqueValues} unique - top: ${topVals}`;
+        }
+        return `${c.name}: ${c.uniqueValues} unique values`;
+      });
+      contextParts.push(`Categorical columns: ${categoricalStats.join(' | ')}`);
+    }
+
+    if (!di.isValid) {
+      contextParts.push(`Dataset validation issues: ${di.validationReasons.join('; ')}`);
+    }
   }
 
   if (contextParts.length === 0) {

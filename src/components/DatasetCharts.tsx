@@ -94,12 +94,12 @@ export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
       </div>
 
       {/* Row 2: Numeric Stats + Categorical Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
         {/* Numeric Column Statistics */}
         {numericStats.length > 0 && (
-          <div className="bg-white/10 border rounded-lg p-4">
+          <div className="bg-white/10 border rounded-lg p-4 h-62.5">
             <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Numeric Column Statistics</h3>
-            <div className="overflow-x-auto">
+            <ScrollArea className="h-[calc(100%-2rem)]">
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-white/10">
@@ -128,15 +128,15 @@ export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </ScrollArea>
           </div>
         )}
 
         {/* Categorical Column Summary */}
         {categoricalSummary.length > 0 && (
-          <div className="bg-white/10 border rounded-lg p-4">
+          <div className="bg-white/10 border rounded-lg p-4 h-62.5">
             <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Categorical Column Summary</h3>
-            <ScrollArea className="h-full pr-3 focus:border-none">
+            <ScrollArea className="h-[calc(100%-2rem)] pr-3">
               <div className="space-y-3">
               {categoricalSummary.map((col) => (
                 <div key={col.name} className="bg-white/5 rounded-md p-2.5">
