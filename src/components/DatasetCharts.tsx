@@ -1,5 +1,6 @@
 import { DatasetChartsProps } from '@/types';
 import { BarChart, PieChart } from './charts';
+import { ScrollArea } from './ui/scroll-area';
 
 export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
   const { columnAnalysis, cleanedPreview } = uploadResult;
@@ -135,7 +136,8 @@ export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
         {categoricalSummary.length > 0 && (
           <div className="bg-white/10 border rounded-lg p-4">
             <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Categorical Column Summary</h3>
-            <div className="space-y-3 max-h-[200px] overflow-y-auto pr-1">
+            <ScrollArea className="h-[200px] pr-3">
+              <div className="space-y-3">
               {categoricalSummary.map((col) => (
                 <div key={col.name} className="bg-white/5 rounded-md p-2.5">
                   <div className="flex items-center justify-between mb-1.5">
@@ -162,7 +164,8 @@ export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
                   </div>
                 </div>
               ))}
-            </div>
+              </div>
+            </ScrollArea>
           </div>
         )}
       </div>
