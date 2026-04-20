@@ -10,6 +10,8 @@ export interface ChatBotProps {
   onClose: () => void;
   context?: ChatContext;
   chartContext?: ChartContextType;
+  // Initial message to auto-send when chat opens
+  initialMessage?: string;
 }
 
 export interface ChatContext {
@@ -30,6 +32,19 @@ export interface ChatContext {
     value?: number;
     segment?: string;
     description?: string;
+  };
+  // Currently selected action for detailed explanation
+  currentAction?: {
+    id: string;
+    title: string;
+    confidence: number;
+    expectedImpact: {
+      delta: number;
+      metric: string;
+      confidence: number;
+    };
+    affectedUsers: number;
+    reasoning: string[];
   };
   // Dataset info - available immediately after upload
   datasetInfo?: {

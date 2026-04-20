@@ -26,27 +26,6 @@ export function ChatBot({ isOpen, onClose, context, chartContext }: ChatBotProps
   const [chatContext, setChatContext] = useState<ChatContext | undefined>(context);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setChatContext(context);
-  }, [context]);
-
-  const { messages, sendMessage, status, error: chatError } = useChat({
-    transport: new DefaultChatTransport({
-      api: '/api/chat',
-    }),
-  });
-
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [messages]);
-
-  useEffect(() => {
-    if (chatError) {
-      setError(chatError.message);
-    }
-  }, [chatError]);
-
   const getContextInfo = (ctx: ChatContext | undefined, chart: ChartContextType | null | undefined): string => {
     const parts: string[] = [];
 
@@ -76,27 +55,94 @@ export function ChatBot({ isOpen, onClose, context, chartContext }: ChatBotProps
     if (ctx.actions && ctx.actions.length > 0) {
       parts.push(`Actions: ${ctx.actions.map(a => a.title).join('; ')}`);
     }
-    // Inject chart context if present
-    if (chart) {
-      const chartInfo = `Chart: ${chart.chartType}`;
-      if (chart.feature) parts.push(`${chartInfo} - Feature: ${chart.feature}`);
-      else parts.push(chartInfo);
-      if (chart.value !== undefined) parts.push(`Value: ${chart.value}`);
-      if (chart.description) parts.push(chart.description);
-    } else if (ctx?.chartData) {
-      parts.push(`Chart context: ${ctx.chartData.description || ctx.chartData.type}`);
+
+    // Current action context - when user clicks "ask about" on an action
+    if (ctx.currentAction) {
+      const action = ctx.currentAction;
+      parts.push(`Current Action: ${action.title}`);
+      parts.push(`Confidence: ${action.confidence}%`);
+      parts.push(`Expected Impact: ${action.expectedImpact.delta}% ${action.expectedImpact.metric}`);
+      parts.push(`Affected Users: ${action.affectedUsers.toLocaleString()}`);
+      parts.push(`Reasoning: ${action.reasoning.join(' | ')}`);
     }
+
+    // Inject chart context if present (from prop or from chatContext)
+    const effectiveChart = chart || ctx.chartData;
+    if (effectiveChart) {
+      const chartType = 'chartType' in effectiveChart ? effectiveChart.chartType : effectiveChart.type;
+      const chartInfo = `Chart: ${chartType}`;
+      if (effectiveChart.feature) parts.push(`${chartInfo} - Feature: ${effectiveChart.feature}`);
+      else parts.push(chartInfo);
+      if (effectiveChart.value !== undefined) parts.push(`Value: ${effectiveChart.value}`);
+      if (effectiveChart.description) parts.push(effectiveChart.description);
+    }
+
     return parts.length > 0 ? `[Context: ${parts.join(' | ')}]\n\n` : '';
   };
+
+  const { messages, sendMessage, status, error: chatError } = useChat({
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+    }),
+  });
+
+  // Wrap sendMessage to ensure stable reference
+  const stableSendMessage = useCallback((msg: { text: string }) => {
+    sendMessage(msg);
+  }, [sendMessage]);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [messages]);
+
+  // Track previous action ID to detect actual changes (avoiding object reference issues)
+  const prevActionIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    // Update local chat context when prop changes
+    setChatContext(context);
+  }, [context]);
+
+  // Effect to send initial message when chat opens with a new action context
+  useEffect(() => {
+    if (!isOpen) return; // Don't send if chat is closed
+
+    const currAction = chatContext?.currentAction;
+    const prevActionId = prevActionIdRef.current;
+
+    // Only auto-send if there's no chart context - if user has a chart question, they should ask manually
+    const hasChartContext = chatContext?.chartData && !chatContext?.chartData?.description?.includes('?');
+
+    // Compare by ID to avoid object reference issues
+    if (currAction && currAction.id !== prevActionId && !hasChartContext) {
+      // Delay slightly to ensure sendMessage is ready
+      const timer = setTimeout(() => {
+        const actionContext = getContextInfo(chatContext, chartContext ?? undefined);
+        const prompt = `Explain the action "${currAction.title}" in detail. Why was this recommended? What is the expected impact of ${currAction.expectedImpact.delta}% ${currAction.expectedImpact.metric}? Which customers are affected and how?`;
+        const fullMessage = actionContext + prompt;
+        stableSendMessage({ text: fullMessage });
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+
+    prevActionIdRef.current = currAction?.id ?? null;
+  }, [isOpen, chatContext, chartContext, stableSendMessage]);
+
+  useEffect(() => {
+    if (chatError) {
+      setError(chatError.message);
+    }
+  }, [chatError]);
 
   const handleSubmit = useCallback((e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!input.trim() || status === 'streaming') return;
     const contextInfo = getContextInfo(chatContext, chartContext ?? undefined);
     const fullMessage = contextInfo + input;
-    sendMessage({ text: fullMessage });
+    stableSendMessage({ text: fullMessage });
     setInput('');
-  }, [input, sendMessage, chatContext, chartContext, status]);
+  }, [input, stableSendMessage, chatContext, chartContext, status]);
 
   const handleCopy = useCallback(async (text: string, id: string) => {
     await navigator.clipboard.writeText(text);
@@ -104,11 +150,12 @@ export function ChatBot({ isOpen, onClose, context, chartContext }: ChatBotProps
     setTimeout(() => setCopiedId(null), 2000);
   }, []);
 
-  const getTextFromMessage = (message: UIMessage): string =>
-    message.parts
+  const getTextFromMessage = (message: UIMessage): string => {
+    return (message.parts || [])
       .filter((part) => part.type === 'text')
-      .map((part) => part.text)
+      .map((part) => (part as { text?: string }).text || '')
       .join('');
+  };
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -138,7 +185,7 @@ export function ChatBot({ isOpen, onClose, context, chartContext }: ChatBotProps
                 <h3 className="font-medium text-lg mb-2">Chat with DataLens</h3>
                 <p className="text-sm text-muted-foreground">
                   {chatContext
-                    ? "Ask questions about your data, actions, or specific charts"
+                    ? "Ask questions about your data, actions, or charts"
                     : "Upload data and run analysis to get contextual insights"}
                 </p>
               </div>

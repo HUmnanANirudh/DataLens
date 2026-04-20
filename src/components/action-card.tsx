@@ -99,9 +99,8 @@ export function ActionCard({
 
         {/* Chart (if provided) */}
         {chartData && chartData.length > 0 && (
-          <div className="pt-2">
+          <div className="pt-2 isolate">
             <p className="text-xs text-muted-foreground mb-2">Supporting Evidence</p>
-            <div className="h-32">
               <BarChart
                 data={chartData.slice(0, 5)}
                 dataKey="value"
@@ -111,7 +110,6 @@ export function ActionCard({
                 showGrid={false}
                 showYAxis={false}
               />
-            </div>
           </div>
         )}
 
@@ -132,7 +130,7 @@ export function ActionCard({
               <ChevronDownIcon className="size-4" />
             )}
           </CollapsibleTrigger>
-          <CollapsibleContent className="pt-2">
+          <CollapsibleContent className="pt-2 z-20 bg-card relative">
             <div className="space-y-2">
               {action.reasoning.map((reason, i) => (
                 <div

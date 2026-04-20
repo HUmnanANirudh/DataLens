@@ -429,16 +429,28 @@ export default function Home() {
   }, []);
 
   const handleAskAbout = useCallback((action: ScoredAction, context?: string) => {
-    if (chatContext) {
-      setChatContext({
-        ...chatContext,
-        chartData: context ? {
-          type: 'action',
-          description: context,
-        } : undefined,
-      });
-    }
+    // Build comprehensive context for the AI about this specific action
+    const actionContext = {
+      type: 'action',
+      description: `Action #${action.id.split('_')[1] || '1'}: ${action.title} - ${action.confidence}% confidence. Expected impact: ${action.expectedImpact.delta}% ${action.expectedImpact.metric}. Affected users: ${action.affectedUsers}. Reasoning: ${action.reasoning.join(', ')}. ${context || ''}`,
+    };
+
+    const fullContext = {
+      ...chatContext,
+      chartData: actionContext,
+      currentAction: {
+        id: action.id,
+        title: action.title,
+        confidence: action.confidence,
+        expectedImpact: action.expectedImpact,
+        affectedUsers: action.affectedUsers,
+        reasoning: action.reasoning,
+      },
+    };
+    setChatContext(fullContext);
     setIsChatOpen(true);
+
+    // Return the action info so caller can send initial message
   }, [chatContext]);
 
   const handleChartAsk = useCallback((context: { chartType: string; feature?: string; value?: number; description?: string }) => {
@@ -618,7 +630,7 @@ export default function Home() {
 
                 {/* Target Validation Message */}
                 {targetColumn && targetValidation.status !== 'idle' && (
-                  <div className={`text-sm mb-4 p-3 rounded-md ${
+                  <div className={`text-sm mb-4 p-2 w-full rounded-md ${
                     targetValidation.status === 'valid' ? 'bg-green-500/10 text-green-400 border border-green-500/30' :
                     targetValidation.status === 'weak' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/30' :
                     targetValidation.status === 'continuous' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30' :
@@ -776,7 +788,7 @@ export default function Home() {
                           <p className="text-xs text-muted-foreground">-</p>
                         </div>
                         <div className="bg-blue-500/20 border border-blue-500/50 rounded-lg p-3 text-center">
-                          <p className="text-2xl font-bold text-blue-400">{(baseline?.churnRate || 0) + simulationResult.delta.churnRate}%</p>
+                          <p className="text-2xl font-bold text-blue-400">{((baseline?.churnRate || 0) + simulationResult.delta.churnRate).toFixed(2)}%</p>
                           <p className="text-xs text-muted-foreground">New Churn Rate</p>
                         </div>
                         <div className="col-span-2 flex items-center justify-center">

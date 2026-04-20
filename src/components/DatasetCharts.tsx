@@ -69,37 +69,38 @@ export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
 
   return (
     <div className="space-y-4">
-      {/* Row 1: Type Distribution + Unique Values side by side */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white/10 border rounded-lg p-4">
+      {/* Row 1: Type Distribution */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white/10 border rounded-lg p-4 md:col-span-1">
           <h3 className="text-sm font-semibold mb-2 text-muted-foreground">Column Type Distribution</h3>
           <PieChart
             data={columnTypeData}
             dataKey="value"
             colors={['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6']}
             showLabels={false}
-            className="h-37.5"
           />
         </div>
-        <div className="bg-white/10 border rounded-lg p-4">
+        
+        {/* Row 1b: Unique Values - Now in a wider column or separate row */}
+        <div className="bg-white/10 border rounded-lg p-4 md:col-span-2">
           <h3 className="text-sm font-semibold mb-2 text-muted-foreground">Unique Values per Column</h3>
           <BarChart
             data={uniqueValuesData}
             dataKey="value"
             nameKey="name"
             fill="#3B82F6"
-            className="h-37.5"
+            layout="vertical"
+            height={Math.max(200, uniqueValuesData.length * 40)}
           />
         </div>
       </div>
 
-      {/* Row 2: Numeric Stats + Categorical Summary */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
         {/* Numeric Column Statistics */}
         {numericStats.length > 0 && (
           <div className="bg-white/10 border rounded-lg p-4 h-62.5">
             <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Numeric Column Statistics</h3>
-            <ScrollArea className="h-[calc(100%-2rem)]">
+            <ScrollArea className="h-[calc(100%-2rem)] px-4">
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-white/10">
@@ -107,7 +108,6 @@ export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
                     <th className="text-right py-1.5 px-2 font-medium text-muted-foreground">Min</th>
                     <th className="text-right py-1.5 px-2 font-medium text-muted-foreground">Max</th>
                     <th className="text-right py-1.5 px-2 font-medium text-muted-foreground">Mean</th>
-                    <th className="text-right py-1.5 pl-2 font-medium text-muted-foreground">Missing</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -119,11 +119,6 @@ export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
                       <td className="text-right py-1.5 px-2 font-mono text-blue-400">{stat.min}</td>
                       <td className="text-right py-1.5 px-2 font-mono text-blue-400">{stat.max}</td>
                       <td className="text-right py-1.5 px-2 font-mono text-emerald-400">{stat.mean}</td>
-                      <td className="text-right py-1.5 pl-2 font-mono">
-                        <span className={parseFloat(stat.missingPct) > 0 ? 'text-amber-400' : 'text-gray-500'}>
-                          {stat.missingPct}%
-                        </span>
-                      </td>
                     </tr>
                   ))}
                 </tbody>

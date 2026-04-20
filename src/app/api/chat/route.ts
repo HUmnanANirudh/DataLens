@@ -64,6 +64,16 @@ IMPORTANT: Do NOT use markdown formatting like **bold**, *italics*, bullet lists
     contextParts.push(`User is asking about: ${context.chartData.type} chart - ${context.chartData.description || 'data point'}`);
   }
 
+  // Current action context - when user clicks "ask about" on an action
+  if (context.currentAction) {
+    const action = context.currentAction;
+    contextParts.push(`Current Action: ${action.title}`);
+    contextParts.push(`Confidence: ${action.confidence}%`);
+    contextParts.push(`Expected Impact: ${action.expectedImpact.delta}% ${action.expectedImpact.metric}`);
+    contextParts.push(`Affected Users: ${action.affectedUsers.toLocaleString()}`);
+    contextParts.push(`Reasoning: ${action.reasoning.join(' | ')}`);
+  }
+
   // Dataset stats - available immediately after upload
   if (context.datasetInfo) {
     const di = context.datasetInfo;
