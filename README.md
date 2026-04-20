@@ -2,7 +2,8 @@
 
 ## The Problem
 
-Indian fintech companies lose ~18-25% of customers annually to churn. Traditional analytics tells you *what happened* — DataLens tells you *what to do about it*.
+Indian fintech companies lose ~18-25% of customers annually to churn. Traditional analytics tells you *what happened*
+DataLens tells you *what to do about it*.
 
 Most analytics tools generate dashboards. DataLens generates decisions.
 
