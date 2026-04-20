@@ -38,7 +38,7 @@ export function AreaChart({
   }, {} as ChartConfig);
 
   return (
-    <ChartContainer config={chartConfig} className={cn("w-full aspect-auto h-[180px]", className)}>
+    <ChartContainer config={chartConfig} className={cn("w-full aspect-auto h-45", className)}>
       <RechartsAreaChart accessibilityLayer data={data}>
         {showGrid && <CartesianGrid vertical={false} stroke="var(--border)" />}
         <XAxis

@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { UploadResult, TrainingResult, DecisionEngineResult, ChurnAnalysis, Action, BaselineMetrics, PredictionResult, BestModel, ScoredAction, ChatContext, DatasetValidationResult } from '@/types';
+import { UploadResult, TrainingResult, DecisionEngineResult, ChurnAnalysis,BaselineMetrics, PredictionResult, BestModel, ScoredAction, ChatContext, DatasetValidationResult } from '@/types';
 import { DatasetCharts } from '@/components/DatasetCharts';
 import { ActionSection } from '@/components/action-section';
 import { EvidenceCharts } from '@/components/evidence-charts';
 import { SimulationSection } from '@/components/simulation-section';
-import { DatasetValidator } from '@/components/ui/dataset-validator';
+import { DatasetValidator } from '@/components/dataset-validator';
 import { calculateBaseline } from '@/lib/decisions/simulation';
 import { ChatBot } from '@/components/ChatBot';
 import { MessageSquareIcon, BarChartIcon, PieChartIcon } from 'lucide-react';
@@ -16,7 +16,6 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { cn } from '@/lib/utils';
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -97,6 +96,20 @@ export default function Home() {
       if (data.datasetValidation) {
         setDatasetValidation(data.datasetValidation);
       }
+
+      // Set chat context with dataset info (available immediately after upload)
+      setChatContext({
+        datasetInfo: {
+          name: file.name,
+          rowCount: data.rowCount,
+          columnCount: data.columns.length,
+          columns: data.columns,
+          columnAnalysis: data.columnAnalysis,
+          isValid: data.datasetValidation?.isValid || false,
+          validationScore: data.datasetValidation?.score || 0,
+          validationReasons: data.datasetValidation?.reasons || [],
+        },
+      });
 
       // Auto-select target if available
       const numericCol = data.columnAnalysis.find((c: { type: string }) => c.type === 'numeric');
@@ -220,8 +233,10 @@ export default function Home() {
       );
       setBaseline(baselineMetrics);
 
-      // Build chat context
-      setChatContext({
+      // Build chat context (preserve datasetInfo from upload)
+      setChatContext(prev => ({
+        ...prev,
+        datasetInfo: prev?.datasetInfo,
         churnRate: baselineMetrics.churnRate,
         highRiskCount: data.churnAnalysis.highRiskCount,
         mediumRiskCount: data.churnAnalysis.mediumRiskCount,
@@ -233,7 +248,7 @@ export default function Home() {
           mediumRisk: data.churnAnalysis.mediumRiskCount,
           lowRisk: data.churnAnalysis.lowRiskCount,
         },
-      });
+      }));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Decision generation failed');
     } finally {

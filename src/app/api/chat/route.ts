@@ -30,7 +30,7 @@ You can discuss:
 - Action recommendations based on predictions
 - General questions about the dataset or predictions
 
-Be concise, helpful, and focus on the user's data context.`;
+IMPORTANT: Do NOT use markdown formatting like **bold**, *italics*, bullet lists with -, or any markdown syntax. Use plain text with clear line breaks. For lists, use simple lines separated by newlines. Never wrap text in ** markers.`;
 
   if (!context) {
     return basePrompt;

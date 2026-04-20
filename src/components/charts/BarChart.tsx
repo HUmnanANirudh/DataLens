@@ -38,7 +38,7 @@ export function BarChart({
   } satisfies ChartConfig;
 
   return (
-    <ChartContainer config={chartConfig} className={cn("w-full aspect-auto h-[180px]", className)}>
+    <ChartContainer config={chartConfig} className={cn("w-full aspect-auto h-45", className)}>
       <RechartsBarChart accessibilityLayer data={data} layout={layout}>
         {showGrid && <CartesianGrid vertical={false} stroke="var(--border)" />}
         {showXAxis && (

@@ -31,4 +31,19 @@ export interface ChatContext {
     segment?: string;
     description?: string;
   };
+  // Dataset info - available immediately after upload
+  datasetInfo?: {
+    name: string;
+    rowCount: number;
+    columnCount: number;
+    columns: string[];
+    columnAnalysis: Array<{
+      name: string;
+      type: string;
+      uniqueValues: number;
+    }>;
+    isValid: boolean;
+    validationScore: number;
+    validationReasons: string[];
+  };
 }

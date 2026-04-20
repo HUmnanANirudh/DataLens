@@ -41,7 +41,7 @@ export function PieChart({
   });
 
   return (
-    <ChartContainer config={chartConfig} className={cn("w-full aspect-auto h-[180px]", className)}>
+    <ChartContainer config={chartConfig} className={cn("w-full aspect-auto h-45", className)}>
       <RechartsPieChart accessibilityLayer>
         <Pie
           data={dataWithColors}

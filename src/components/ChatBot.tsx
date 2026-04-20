@@ -12,16 +12,19 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { CopyIcon, CheckIcon, MessageSquareIcon, SendIcon } from 'lucide-react';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { UIMessage } from 'ai';
 import { ChatBotProps, ChatContext, ChartContextType } from '@/types';
 import { cn } from '@/lib/utils';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export function ChatBot({ isOpen, onClose, context, chartContext }: ChatBotProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [input, setInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [chatContext, setChatContext] = useState<ChatContext | undefined>(context);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setChatContext(context);
@@ -33,6 +36,11 @@ export function ChatBot({ isOpen, onClose, context, chartContext }: ChatBotProps
     }),
   });
 
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [messages]);
+
   useEffect(() => {
     if (chatError) {
       setError(chatError.message);
@@ -41,12 +49,31 @@ export function ChatBot({ isOpen, onClose, context, chartContext }: ChatBotProps
 
   const getContextInfo = (ctx: ChatContext | undefined, chart: ChartContextType | null | undefined): string => {
     const parts: string[] = [];
-    if (ctx?.churnRate !== undefined) parts.push(`Current churn rate: ${ctx.churnRate}%`);
-    if (ctx?.highRiskCount !== undefined) parts.push(`High-risk customers: ${ctx.highRiskCount}`);
-    if (ctx?.topDrivers && ctx.topDrivers.length > 0) {
+
+    // If no context at all, user hasn't uploaded data yet
+    if (!ctx) {
+      return '[No data uploaded yet. Ask the user to upload and analyze their CSV dataset first.]\n\n';
+    }
+
+    // Check if we have dataset info (upload happened) but no analysis yet
+    const hasDatasetInfo = ctx.datasetInfo && ctx.churnRate === undefined;
+    if (hasDatasetInfo) {
+      const di = ctx.datasetInfo!;
+      const columnList = di.columnAnalysis.map(c => c.name).join(', ');
+      parts.push(`Dataset: ${di.name} | ${di.rowCount.toLocaleString()} rows | ${di.columnCount} columns`);
+      parts.push(`Columns: ${columnList}`);
+      if (!di.isValid) {
+        parts.push(`Validation: ${di.validationReasons.join('; ')}`);
+      }
+    }
+
+    // Add analysis context if available (after training)
+    if (ctx.churnRate !== undefined) parts.push(`Churn rate: ${ctx.churnRate}%`);
+    if (ctx.highRiskCount !== undefined) parts.push(`High-risk customers: ${ctx.highRiskCount}`);
+    if (ctx.topDrivers && ctx.topDrivers.length > 0) {
       parts.push(`Top drivers: ${ctx.topDrivers.slice(0, 3).join(', ')}`);
     }
-    if (ctx?.actions && ctx.actions.length > 0) {
+    if (ctx.actions && ctx.actions.length > 0) {
       parts.push(`Actions: ${ctx.actions.map(a => a.title).join('; ')}`);
     }
     // Inject chart context if present
@@ -62,7 +89,7 @@ export function ChatBot({ isOpen, onClose, context, chartContext }: ChatBotProps
     return parts.length > 0 ? `[Context: ${parts.join(' | ')}]\n\n` : '';
   };
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!input.trim() || status === 'streaming') return;
     const contextInfo = getContextInfo(chatContext, chartContext ?? undefined);
@@ -132,7 +159,13 @@ export function ChatBot({ isOpen, onClose, context, chartContext }: ChatBotProps
                       : "bg-muted"
                   )}
                 >
-                  {getTextFromMessage(message)}
+                  {message.role === 'user' ? (
+                    getTextFromMessage(message)
+                  ) : (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {getTextFromMessage(message)}
+                    </ReactMarkdown>
+                  )}
                 </div>
                 <Button
                   variant="ghost"
@@ -151,6 +184,7 @@ export function ChatBot({ isOpen, onClose, context, chartContext }: ChatBotProps
                 </Button>
               </div>
             ))}
+            <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
 

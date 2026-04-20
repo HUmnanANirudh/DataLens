@@ -46,7 +46,7 @@ export function ModelCharts({ trainingResult, columns }: ModelChartsProps) {
             nameKey="name"
             fill="#3B82F6"
             formatter={percentFormatter}
-            className="h-[150px]"
+            className="h-37.5"
           />
         </div>
         <div className="bg-white/10 border rounded-lg p-4">
@@ -60,7 +60,7 @@ export function ModelCharts({ trainingResult, columns }: ModelChartsProps) {
             layout="vertical"
             fill="#10B981"
             formatter={percentFormatter}
-            className="h-[150px]"
+            className="h-37.5"
           />
         </div>
       </div>
@@ -78,7 +78,7 @@ export function ModelCharts({ trainingResult, columns }: ModelChartsProps) {
             layout="vertical"
             fill="#F59E0B"
             formatter={percentFormatter}
-            className="h-[160px]"
+            className="h-40"
           />
         </div>
       )}

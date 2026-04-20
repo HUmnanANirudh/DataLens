@@ -39,7 +39,7 @@ export function LineChart({
   }, {} as ChartConfig);
 
   return (
-    <ChartContainer config={chartConfig} className={cn("w-full aspect-auto h-[180px]", className)}>
+    <ChartContainer config={chartConfig} className={cn("w-full aspect-auto h-45", className)}>
       <RechartsLineChart accessibilityLayer data={data}>
         {showGrid && <CartesianGrid vertical={false} stroke="var(--border)" />}
         <XAxis

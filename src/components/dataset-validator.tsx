@@ -1,10 +1,9 @@
 'use client';
 
-import { AlertTriangleIcon, UploadIcon, ArrowRightIcon } from 'lucide-react';
+import { AlertTriangleIcon, UploadIcon } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DatasetValidationResult } from '@/types';
-import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
 interface DatasetValidatorProps {
