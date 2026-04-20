@@ -142,7 +142,7 @@ CSV Upload → Validation (customer analytics check)
 
 To test DataLens without your own dataset, you can use the provided sample fintech churn dataset:
 
-1. **Download** the sample CSV:.
+1. **Download** the sample CSV:[customer_churn_dataset-training-master (2).csv](https://github.com/user-attachments/files/26900315/customer_churn_dataset-training-master.2.csv).
 2. **Upload** it to the DataLens interface.
 3. **Run Analysis** to see predicted churn, top drivers, and actionable recommendations.
 
