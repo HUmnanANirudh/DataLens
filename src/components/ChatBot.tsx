@@ -98,6 +98,29 @@ export function ChatBot({ isOpen, onClose, context, chartContext }: ChatBotProps
 
   // Track previous action ID to detect actual changes (avoiding object reference issues)
   const prevActionIdRef = useRef<string | null>(null);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
+
+  // Pre-fill input when chat opens with a chart context question (from evidence charts)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // If there's a chart description (user's typed question from evidence charts), pre-fill it
+    // Don't pre-fill for: action cards (auto-send handles those), or the general "overview" ask button
+    const chartDesc = chatContext?.chartData?.description;
+    const chartType = chatContext?.chartData?.type;
+    const isOverview = chartDesc === 'Evidence charts overview' && chartType === 'both';
+
+    if (chartDesc && !isOverview && !chatContext?.currentAction) {
+      // User came from evidence charts with a specific question - pre-fill input
+      setInput(chartDesc);
+    }
+  }, [isOpen, chatContext]);
+
   useEffect(() => {
     // Update local chat context when prop changes
     setChatContext(context);
@@ -111,12 +134,16 @@ export function ChatBot({ isOpen, onClose, context, chartContext }: ChatBotProps
     const prevActionId = prevActionIdRef.current;
 
     // Only auto-send if there's no chart context - if user has a chart question, they should ask manually
-    const hasChartContext = chatContext?.chartData && !chatContext?.chartData?.description?.includes('?');
+    // chartData with type='action' is from action cards, not chart interactions
+    const hasChartContext = chatContext?.chartData &&
+      chatContext.chartData.type !== 'action' &&
+      !chatContext?.chartData?.description?.includes('?');
 
     // Compare by ID to avoid object reference issues
     if (currAction && currAction.id !== prevActionId && !hasChartContext) {
       // Delay slightly to ensure sendMessage is ready
       const timer = setTimeout(() => {
+        if (!isMountedRef.current) return;
         const actionContext = getContextInfo(chatContext, chartContext ?? undefined);
         const prompt = `Explain the action "${currAction.title}" in detail. Why was this recommended? What is the expected impact of ${currAction.expectedImpact.delta}% ${currAction.expectedImpact.metric}? Which customers are affected and how?`;
         const fullMessage = actionContext + prompt;
