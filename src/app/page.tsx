@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -26,6 +27,7 @@ export default function Home() {
 
   // Training state
   const [targetColumn, setTargetColumn] = useState<string>('');
+  const [targetValidation, setTargetValidation] = useState<{ status: 'idle' | 'valid' | 'weak' | 'continuous' | 'invalid'; message: string }>({ status: 'idle', message: '' });
   const [trainingResult, setTrainingResult] = useState<TrainingResult & { bestModel: BestModel; featureNames?: string[] } | null>(null);
   const [training, setTraining] = useState(false);
 
@@ -62,7 +64,70 @@ export default function Home() {
     setBaseline(null);
     setSimulationActive(false);
     setTargetColumn('');
+    setTargetValidation({ status: 'idle', message: '' });
   }, []);
+
+  const validateTarget = useCallback((col: string) => {
+    if (!col || !uploadResult) {
+      setTargetValidation({ status: 'idle', message: '' });
+      return;
+    }
+
+    const colAnalysis = uploadResult.columnAnalysis.find((c: { name: string }) => c.name === col);
+    if (!colAnalysis) {
+      setTargetValidation({ status: 'invalid', message: `Column "${col}" not found in dataset` });
+      return;
+    }
+
+    const uniqueValues = colAnalysis.uniqueValues;
+    const totalRows = uploadResult.cleanedRowCount;
+    const isChurnLike = /churn|target|label|yes_no|binary/.test(col.toLowerCase());
+    const isBinary = uniqueValues === 2;
+    const isLowCardinality = uniqueValues <= 5;
+    const isHighCardinality = uniqueValues > 10 && colAnalysis.type === 'numeric';
+
+    // Case A: Valid binary target
+    if (isBinary) {
+      setTargetValidation({
+        status: 'valid',
+        message: `Using "${col}" as target (binary classification)`,
+      });
+      return;
+    }
+
+    // Case B: High cardinality continuous - will be converted
+    if (isHighCardinality) {
+      setTargetValidation({
+        status: 'continuous',
+        message: `"${col}" is continuous. Will convert to binary using median split.`,
+      });
+      return;
+    }
+
+    // Case C: Low cardinality categorical (not binary)
+    if (isLowCardinality && !isBinary) {
+      setTargetValidation({
+        status: 'weak',
+        message: `"${col}" has only ${uniqueValues} categories. This may have limited predictive power.`,
+      });
+      return;
+    }
+
+    // Case D: Invalid - too many classes for categorical
+    if (!isBinary && uniqueValues > 5) {
+      setTargetValidation({
+        status: 'invalid',
+        message: `"${col}" has ${uniqueValues} unique values. Not suitable as classification target.`,
+      });
+      return;
+    }
+
+    // Default: weak
+    setTargetValidation({
+      status: 'weak',
+      message: `"${col}" may not be ideal as a target column.`,
+    });
+  }, [uploadResult]);
 
   const handleUpload = async () => {
     if (!file) return;
@@ -74,6 +139,8 @@ export default function Home() {
     setDecisions(null);
     setChurnAnalysis(null);
     setSimulationResult(null);
+    setTargetColumn('');
+    setTargetValidation({ status: 'idle', message: '' });
 
     const formData = new FormData();
     formData.append('file', file);
@@ -111,10 +178,43 @@ export default function Home() {
         },
       });
 
-      // Auto-select target if available
-      const numericCol = data.columnAnalysis.find((c: { type: string }) => c.type === 'numeric');
-      if (numericCol) {
-        setTargetColumn(numericCol.name);
+      // Auto-select target if available (prioritizing obvious targets like churn)
+      const validTargetColumns = data.columns.filter((col: string) => {
+        const idPatterns = ['id', 'customer_id', 'uuid', 'guid', 'index', 'serial'];
+        const lowerCol = col.toLowerCase();
+        const isIdLike = idPatterns.some(p => lowerCol.includes(p));
+        const colAnalysis = data.columnAnalysis.find((c: { name: string }) => c.name === col);
+        const isFullyUnique = colAnalysis && colAnalysis.uniqueValues === data.rowCount;
+        return !isIdLike && !isFullyUnique;
+      });
+
+      // First priority: columns with churn-like names
+      const churnLikeCol = validTargetColumns.find((col: string) =>
+        /churn|target|label|yes_no|binary/.test(col.toLowerCase())
+      );
+
+      // Second priority: numeric columns
+      const numericCol = !churnLikeCol ? validTargetColumns.find((col: string) => {
+        const colAnalysis = data.columnAnalysis.find((c: { name: string }) => c.name === col);
+        return colAnalysis?.type === 'numeric';
+      }) : null;
+
+      const selectedCol = churnLikeCol || numericCol;
+      if (selectedCol) {
+        setTargetColumn(selectedCol);
+        // Validate the auto-selected column
+        const colAnalysis = data.columnAnalysis.find((c: { name: string }) => c.name === selectedCol);
+        const uniqueValues = colAnalysis?.uniqueValues || 0;
+        const isBinary = uniqueValues === 2;
+        const isHighCardinality = uniqueValues > 10 && colAnalysis?.type === 'numeric';
+
+        if (isBinary) {
+          setTargetValidation({ status: 'valid', message: `Auto-selected "${selectedCol}" as target (binary classification)` });
+        } else if (isHighCardinality) {
+          setTargetValidation({ status: 'continuous', message: `Auto-selected "${selectedCol}" (will convert to binary using median split)` });
+        } else {
+          setTargetValidation({ status: 'weak', message: `Auto-selected "${selectedCol}" (may have limited predictive power)` });
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed');
@@ -360,8 +460,8 @@ export default function Home() {
 
       {/* Processing Status */}
       {isProcessing && (
-        <Card className="mb-6">
-          <CardContent className="pt-6">
+        <Card className='mb-6'>
+          <CardContent>
             <div className="flex items-center gap-3">
               <Spinner />
               <span className="text-sm text-muted-foreground">
@@ -437,28 +537,61 @@ export default function Home() {
                 <CardTitle>Model Training</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center gap-4 flex-wrap mb-6">
+                <div className="flex items-center gap-4 flex-wrap mb-4">
                   <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium">Target Column:</label>
-                    <select
-                      value={targetColumn}
-                      onChange={(e) => setTargetColumn(e.target.value)}
-                      className="px-4 py-2 border rounded-md bg-background"
-                    >
-                      <option value="">Select target</option>
-                      {uploadResult.columns.map((col: string) => (
-                        <option key={col} value={col}>{col}</option>
-                      ))}
-                    </select>
+                    <label className="text-sm font-medium whitespace-nowrap">Target Column:</label>
+                    <Select value={targetColumn} onValueChange={(val) => {
+                      const col = val || '';
+                      setTargetColumn(col);
+                      validateTarget(col);
+                    }}>
+                      <SelectTrigger className="w-50">
+                        <SelectValue placeholder="Select target" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {uploadResult.columns
+                          .filter((col: string) => {
+                            const idPatterns = ['id', 'customer_id', 'uuid', 'guid', 'index', 'serial'];
+                            const lowerCol = col.toLowerCase();
+                            const isIdLike = idPatterns.some(p => lowerCol.includes(p));
+                            const colAnalysis = uploadResult.columnAnalysis.find((c: { name: string }) => c.name === col);
+                            const isFullyUnique = colAnalysis && colAnalysis.uniqueValues === uploadResult.cleanedRowCount;
+                            return !isIdLike && !isFullyUnique;
+                          })
+                          .map((col: string) => {
+                            const colAnalysis = uploadResult.columnAnalysis.find((c: { name: string }) => c.name === col);
+                            const isChurnLike = /churn|target|label|yes_no|binary/.test(col.toLowerCase());
+                            return (
+                              <SelectItem key={col} value={col}>
+                                {col}
+                                {isChurnLike && ' (recommended)'}
+                              </SelectItem>
+                            );
+                          })}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <Button
                     onClick={handleTrain}
-                    disabled={!targetColumn || isProcessing}
+                    disabled={!targetColumn || targetValidation.status === 'invalid' || isProcessing}
                   >
                     {isProcessing ? 'Processing...' : 'Train & Predict'}
                   </Button>
                 </div>
+
+                {/* Target Validation Message */}
+                {targetColumn && targetValidation.status !== 'idle' && (
+                  <div className={`text-sm mb-4 p-3 rounded-md ${
+                    targetValidation.status === 'valid' ? 'bg-green-500/10 text-green-400 border border-green-500/30' :
+                    targetValidation.status === 'weak' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/30' :
+                    targetValidation.status === 'continuous' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30' :
+                    targetValidation.status === 'invalid' ? 'bg-destructive/10 text-destructive border border-destructive/30' :
+                    'bg-muted'
+                  }`}>
+                    <p className="font-medium">{targetValidation.message}</p>
+                  </div>
+                )}
 
                 {trainingResult && (
                   <>

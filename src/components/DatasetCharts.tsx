@@ -3,7 +3,7 @@ import { BarChart, PieChart } from './charts';
 import { ScrollArea } from './ui/scroll-area';
 
 export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
-  const { columnAnalysis, cleanedPreview } = uploadResult;
+  const { columnAnalysis } = uploadResult;
 
   if (columnAnalysis.length === 0) {
     return null;
@@ -23,17 +23,19 @@ export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
     value: col.uniqueValues,
   }));
 
-  // Numeric column statistics
+  // Numeric column statistics - using full cleanedData for accurate stats
   const numericColumns = columnAnalysis.filter((col) => col.type === 'numeric');
   const numericStats = numericColumns.map((col) => {
-    const values = cleanedPreview
+    const values = uploadResult.cleanedData
       .map((row) => parseFloat(row[col.name]))
       .filter((v) => !isNaN(v));
-    const min = values.length ? Math.min(...values) : 0;
-    const max = values.length ? Math.max(...values) : 0;
+
+    // Use reduce instead of Math.min/max with spread to avoid stack overflow on large datasets
+    const min = values.reduce((a, b) => Math.min(a, b), values[0] ?? 0);
+    const max = values.reduce((a, b) => Math.max(a, b), values[0] ?? 0);
     const mean = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
-    const missing = cleanedPreview.filter((row) => !row[col.name] || row[col.name] === '').length;
-    const missingPct = cleanedPreview.length ? (missing / cleanedPreview.length) * 100 : 0;
+    const missing = uploadResult.cleanedData.filter((row) => !row[col.name] || row[col.name] === '').length;
+    const missingPct = uploadResult.cleanedData.length ? (missing / uploadResult.cleanedData.length) * 100 : 0;
     return {
       name: col.name,
       min: min.toLocaleString(undefined, { maximumFractionDigits: 2 }),
@@ -44,17 +46,15 @@ export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
     };
   });
 
-  // Categorical column top values
+  // Categorical column summary - using full cleanedData for accurate counts, showing top 3
   const categoricalColumns = columnAnalysis.filter((col) => col.type === 'categorical');
-  const categoricalSummary = categoricalColumns.slice(0, 6).map((col) => {
+  const categoricalSummary = categoricalColumns.map((col) => {
     const counts: Record<string, number> = {};
-    cleanedPreview.forEach((row) => {
+    uploadResult.cleanedData.forEach((row) => {
       const value = row[col.name] || '(empty)';
       counts[value] = (counts[value] || 0) + 1;
     });
-    const sorted = Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3);
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
     const total = Object.values(counts).reduce((a, b) => a + b, 0);
     return {
       name: col.name,
@@ -78,7 +78,7 @@ export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
             dataKey="value"
             colors={['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6']}
             showLabels={false}
-            className="h-[150px]"
+            className="h-37.5"
           />
         </div>
         <div className="bg-white/10 border rounded-lg p-4">
@@ -88,7 +88,7 @@ export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
             dataKey="value"
             nameKey="name"
             fill="#3B82F6"
-            className="h-[150px]"
+            className="h-37.5"
           />
         </div>
       </div>
@@ -113,7 +113,7 @@ export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
                 <tbody>
                   {numericStats.map((stat) => (
                     <tr key={stat.name} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                      <td className="py-1.5 pr-3 font-medium truncate max-w-[120px]" title={stat.name}>
+                      <td className="py-1.5 pr-3 font-medium truncate max-w-30" title={stat.name}>
                         {stat.name.length > 15 ? stat.name.slice(0, 15) + '…' : stat.name}
                       </td>
                       <td className="text-right py-1.5 px-2 font-mono text-blue-400">{stat.min}</td>
@@ -136,12 +136,12 @@ export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
         {categoricalSummary.length > 0 && (
           <div className="bg-white/10 border rounded-lg p-4">
             <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Categorical Column Summary</h3>
-            <ScrollArea className="h-[200px] pr-3">
+            <ScrollArea className="h-full pr-3 focus:border-none">
               <div className="space-y-3">
               {categoricalSummary.map((col) => (
                 <div key={col.name} className="bg-white/5 rounded-md p-2.5">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-medium truncate max-w-[150px]" title={col.name}>
+                    <span className="text-xs font-medium truncate max-w-37.5" title={col.name}>
                       {col.name.length > 20 ? col.name.slice(0, 20) + '…' : col.name}
                     </span>
                     <span className="text-[10px] text-muted-foreground ml-2 shrink-0">
@@ -157,7 +157,7 @@ export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
                             style={{ width: `${Math.min(parseFloat(tv.pct), 100)}%` }}
                           />
                         </div>
-                        <span className="text-gray-300 truncate max-w-[100px]" title={tv.value}>{tv.value}</span>
+                        <span className="text-gray-300 truncate max-w-25" title={tv.value}>{tv.value}</span>
                         <span className="text-muted-foreground shrink-0">{tv.pct}%</span>
                       </div>
                     ))}

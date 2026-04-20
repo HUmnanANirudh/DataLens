@@ -21,24 +21,21 @@ export function PieChart({
   nameKey = 'name',
   showLabels = true,
   className,
+  colors
 }: PieChartProps & { className?: string }) {
   if (!data || data.length === 0) return null;
 
-  const colors = [
-    'var(--chart-1)',
-    'var(--chart-2)',
-    'var(--chart-3)',
-    'var(--chart-4)',
-    'var(--chart-5)',
-  ] as const;
-
   const chartConfig: ChartConfig = {};
   const dataWithColors = data.map((item, index) => {
-    const key = String(item[nameKey] || index);
-    const color = colors[index % colors.length];
-    chartConfig[key] = { label: key, color };
-    return { ...item, fill: color };
-  });
+  const key = String(item[nameKey] || index);
+
+  const color =
+    colors?.[index] ||
+    `var(--chart-${(index % 4) + 1})`;
+  chartConfig[key] = { label: key, color };
+
+  return { ...item, fill: color };
+});
 
   return (
     <ChartContainer config={chartConfig} className={cn("w-full aspect-auto h-45", className)}>
