@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { UploadResult, TrainingResult, DecisionEngineResult, ChurnAnalysis,BaselineMetrics, PredictionResult, BestModel, ScoredAction, ChatContext, DatasetValidationResult } from '@/types';
+import { UploadResult, TrainingResult, DecisionEngineResult, ChurnAnalysis, BaselineMetrics, PredictionResult, BestModel, ScoredAction, ChatContext, DatasetValidationResult, ChartContextType } from '@/types';
 import { DatasetCharts } from '@/components/DatasetCharts';
 import { ActionSection } from '@/components/action-section';
 import { EvidenceCharts } from '@/components/evidence-charts';
@@ -49,7 +49,7 @@ export default function Home() {
   // Chat state
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatContext, setChatContext] = useState<ChatContext | null>(null);
-  const [chartContext, setChartContext] = useState<{ chartType: string; feature?: string; value?: number; description?: string } | null>(null);
+  const [chartContext, setChartContext] = useState<ChartContextType | null>(null);
 
   const handleReset = useCallback(() => {
     setFile(null);
@@ -453,7 +453,7 @@ export default function Home() {
     // Return the action info so caller can send initial message
   }, [chatContext]);
 
-  const handleChartAsk = useCallback((context: { chartType: string; feature?: string; value?: number; description?: string; segment?: string }) => {
+  const handleChartAsk = useCallback((context: ChartContextType) => {
     setChartContext(context);
     if (chatContext) {
       setChatContext({

@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { BarChartIcon, PieChartIcon, MessageCircleIcon, SendIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ChartContextType as ChartContext } from '@/types';
 
 interface EvidenceChartsProps {
   riskDistribution?: {
@@ -28,12 +29,6 @@ interface EvidenceChartsProps {
   };
 }
 
-interface ChartContext {
-  chartType: string;
-  feature?: string;
-  value?: number;
-  description?: string;
-}
 
 interface ChartDataPoint {
   type: string;
