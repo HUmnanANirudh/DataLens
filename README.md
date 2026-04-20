@@ -1,4 +1,5 @@
-# DataLens — AI Growth Strategy Engine for Fintech
+# DataLens 
+An AI Growth Strategy Engine for Fintech
 
 ## The Problem
 
@@ -11,7 +12,7 @@ Most analytics tools generate dashboards. DataLens generates decisions.
 
 ## What I Built
 
-A decision-first analytics system that converts raw customer CSV data into ranked, actionable growth strategies — ready to implement.
+A decision-first analytics system that converts raw customer CSV data into ranked, actionable growth strategies ready to implement.
 
 **Input**: Customer data CSV (any format)
 **Output**: Top 3 prioritized actions with simulated impact, reasoning, and affected customer count
@@ -147,7 +148,3 @@ CSV Upload → Validation (customer analytics check)
 - [x] AI chat with markdown rendering
 - [x] Live deployment URL
 - [ ] Need: Real fintech customer data demo
-
----
-
-*DataLens: Turn customer data into growth decisions.*
