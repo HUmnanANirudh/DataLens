@@ -65,6 +65,7 @@ export function EvidenceCharts({
       chartType: hoveredData.type,
       feature: hoveredData.feature,
       value: hoveredData.value,
+      segment: hoveredData.label, // Include the segment label (e.g., "High Risk", "Tenure")
       description: inlineQuestion,
     });
     setInlineQuestion('');

@@ -71,6 +71,7 @@ export function ChatBot({ isOpen, onClose, context, chartContext }: ChatBotProps
     if (effectiveChart) {
       const chartType = 'chartType' in effectiveChart ? effectiveChart.chartType : effectiveChart.type;
       const chartInfo = `Chart: ${chartType}`;
+      if (effectiveChart.segment) parts.push(`Segment: ${effectiveChart.segment}`);
       if (effectiveChart.feature) parts.push(`${chartInfo} - Feature: ${effectiveChart.feature}`);
       else parts.push(chartInfo);
       if (effectiveChart.value !== undefined) parts.push(`Value: ${effectiveChart.value}`);

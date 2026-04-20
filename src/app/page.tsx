@@ -453,7 +453,7 @@ export default function Home() {
     // Return the action info so caller can send initial message
   }, [chatContext]);
 
-  const handleChartAsk = useCallback((context: { chartType: string; feature?: string; value?: number; description?: string }) => {
+  const handleChartAsk = useCallback((context: { chartType: string; feature?: string; value?: number; description?: string; segment?: string }) => {
     setChartContext(context);
     if (chatContext) {
       setChatContext({
@@ -463,6 +463,7 @@ export default function Home() {
           feature: context.feature,
           value: context.value,
           description: context.description,
+          segment: context.segment,
         },
       });
     }

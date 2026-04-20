@@ -3,6 +3,7 @@ export interface ChartContextType {
   feature?: string;
   value?: number;
   description?: string;
+  segment?: string;
 }
 
 export interface ChatBotProps {
