@@ -138,13 +138,26 @@ CSV Upload → Validation (customer analytics check)
 
 ---
 
-## Current Status
+## Limitations & Roadmap
 
-- [x] Working application (Next.js, TypeScript)
-- [x] CSV upload with streaming parse
-- [x] Multi-model training + selection
-- [x] Decision engine with ranked actions
-- [x] Deterministic simulation
-- [x] AI chat with markdown rendering
-- [x] Live deployment URL
-- [ ] Need: Real fintech customer data demo
+### Current Limitation
+
+Model training and inference currently run in a single browser thread (client-side). This introduces:
+
+- Performance constraints on large datasets (50k+ rows)
+- Limited scalability for concurrent users
+- No distributed training capability
+
+### In Progress: AWS SageMaker Migration
+
+Migrating the ML layer to AWS SageMaker to:
+
+- Offload training and inference to managed infrastructure
+- Enable scalable, low-latency predictions via real-time endpoints
+- Support larger datasets without browser limitations
+
+**Target Architecture:**
+- Next.js → preprocessing + decision engine
+- SageMaker → model inference (probability generation)
+
+This migration preserves the existing decision engine while improving system reliability and scale.
