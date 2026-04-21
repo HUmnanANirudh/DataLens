@@ -43,7 +43,7 @@ https://github.com/user-attachments/assets/3f23c248-eeab-4da5-af1e-07902655e092
 | Feature Engineering | Automatic type inference — numeric, categorical, date |
 | Model Training | Logistic Regression, Random Forest, XGBoost, Bagging in parallel |
 | Model Selection | Best model via F1 score |
-| Decision Engine | Generates scored actions from model outputs |
+| Decision Engine | Converts probabilities → ranked actions (core system) |
 | Top Actions | Top 3 recommendations with confidence levels |
 | Simulation | Before/after metrics — churn rate, at-risk customers, LTV |
 | Chat Interface | AI-powered Q&A with markdown rendering, chart context awareness |
@@ -67,7 +67,7 @@ Traditional analytics = "Your churn rate is 18.2%"
 
 DataLens = "Offer annual contracts to monthly customers — this targets 1,842 high-risk users and reduces churn by 12%. Confidence: 89%."
 
-We don't show you data. We show you what to do.
+It transforms predictions into ranked actions with impact and confidence.
 
 ---
 
@@ -131,7 +131,7 @@ CSV Upload → Validation (customer analytics check)
 
 1. **No vendor dependency** — works with any CSV, any CRM export
 2. **Vertical agnostic** — same engine handles fintech, e-commerce, SaaS churn
-3. **Lightweight** — no data pipeline, no infrastructure, no ML platform needed
+3. **Lightweight** — no complex data pipelines or integrations needed
 4. **Indian market fit** — handles regional data quirks (PAN, UPI, multi-language name fields)
 
 ---
