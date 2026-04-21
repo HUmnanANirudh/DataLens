@@ -17,7 +17,7 @@ A decision-first analytics system that converts raw customer CSV data into ranke
 **Input**: Customer data CSV (any format)
 **Output**: Top 3 prioritized actions with simulated impact, reasoning, and affected customer count
 
-https://github.com/user-attachments/assets/809b98e5-1f22-4312-8b46-602563192dd3
+https://github.com/user-attachments/assets/3f23c248-eeab-4da5-af1e-07902655e092
 
 ---
 
