@@ -21,8 +21,6 @@ https://github.com/user-attachments/assets/3f23c248-eeab-4da5-af1e-07902655e092
 
 ---
 
-
-
 ## Why DataLens for Fintech?
 
 - Built for customer lifecycle challenges — churn prediction, retention optimization, revenue protection
@@ -43,7 +41,7 @@ https://github.com/user-attachments/assets/3f23c248-eeab-4da5-af1e-07902655e092
 | CSV Upload | Streaming parser handles large datasets |
 | Dataset Validation | Checks for customer ID, target variable, time columns (customer analytics readiness) |
 | Feature Engineering | Automatic type inference — numeric, categorical, date |
-| Model Training | Logistic Regression, Random Forest, Gradient Boosting in parallel |
+| Model Training | Logistic Regression, Random Forest, XGBoost, Bagging in parallel |
 | Model Selection | Best model via F1 score |
 | Decision Engine | Generates scored actions from model outputs |
 | Top Actions | Top 3 recommendations with confidence levels |
@@ -97,8 +95,8 @@ Action {
   affectedUsers: 1842
   reasoning: ["contract type = primary churn driver", "monthly users show 3.2x higher churn"]
 }
-```
 
+```
 ### Simulation Engine
 
 Before → After (deterministic, derived from action parameters):
@@ -106,10 +104,9 @@ Before → After (deterministic, derived from action parameters):
 ```
 Churn Rate: 18.2% → 15.0%
 At-risk Customers: 184 → 127
-Revenue Impact: +₹14.2L ARR
+LTV: $1,000 → $1,080
 
 ```
-
 ### Chat Interface
 
 Context-aware AI that references your actual data:
@@ -164,7 +161,7 @@ Model training and inference currently run in a single browser thread (client-si
 
 ### In Progress: AWS SageMaker Migration
 
-Migrating the ML layer to AWS SageMaker to:
+Migrating ML inference to AWS SageMaker for scalability:
 
 - Offload training and inference to managed infrastructure
 - Enable scalable, low-latency predictions via real-time endpoints
