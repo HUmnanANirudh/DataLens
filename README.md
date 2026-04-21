@@ -65,7 +65,7 @@ https://github.com/user-attachments/assets/3f23c248-eeab-4da5-af1e-07902655e092
 
 Traditional analytics = "Your churn rate is 18.2%"
 
-DataLens = "Offer annual contracts to monthly customers — this targets 1,842 high-risk users and reduces churn by 12%. Confidence: 89%. Simulated impact: ₹14.2L saved ARR."
+DataLens = "Offer annual contracts to monthly customers — this targets 1,842 high-risk users and reduces churn by 12%. Confidence: 89%."
 
 We don't show you data. We show you what to do.
 
@@ -95,7 +95,6 @@ Action {
   affectedUsers: 1842
   reasoning: ["contract type = primary churn driver", "monthly users show 3.2x higher churn"]
 }
-
 ```
 ### Simulation Engine
 
@@ -105,7 +104,6 @@ Before → After (deterministic, derived from action parameters):
 Churn Rate: 18.2% → 15.0%
 At-risk Customers: 184 → 127
 LTV: $1,000 → $1,080
-
 ```
 ### Chat Interface
 
@@ -125,7 +123,6 @@ CSV Upload → Validation (customer analytics check)
 → Feature Matrix → Model Training → Predictions
 → Decision Rules → Action Scoring → Top 3 Actions
 → Simulation → UI + Chat Context
-
 ```
 
 ---
@@ -155,7 +152,7 @@ To test DataLens without your own dataset, you can use the provided sample finte
 
 Model training and inference currently run in a single browser thread (client-side). This introduces:
 
-- Performance constraints on large datasets (50k+ rows)
+- Performance constraints on large datasets
 - Limited scalability for concurrent users
 - No distributed training capability
 
