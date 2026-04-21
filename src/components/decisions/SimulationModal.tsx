@@ -1,13 +1,7 @@
 'use client';
 
-import { Action, BaselineMetrics } from '@/types';
-import { simulateAction, SimulationResult } from '@/lib/decisions/simulation';
-
-interface SimulationModalProps {
-  action: Action;
-  baseline: BaselineMetrics;
-  onClose: () => void;
-}
+import { SimulationModalProps,SimulationResult } from '@/types';
+import { simulateAction } from '@/lib/decisions/simulation';
 
 const METRIC_LABELS: Record<string, string> = {
   churnRate: 'Churn Rate',
@@ -100,7 +94,7 @@ export function SimulationModal({ action, baseline, onClose }: SimulationModalPr
           </div>
 
           {/* Impact Summary */}
-          <div className="bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/30 rounded-xl p-4 mb-6">
+          <div className="bg-linear-to-r from-green-500/10 to-blue-500/10 border border-green-500/30 rounded-xl p-4 mb-6">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-green-400 text-xl">✓</span>
               <span className="font-semibold">Projected Impact</span>

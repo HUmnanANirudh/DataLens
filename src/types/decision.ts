@@ -124,3 +124,9 @@ export interface ActionCardProps {
   onSimulate?: (action: ScoredAction) => void;
   onAskAbout?: (action: ScoredAction, context?: string) => void;
 }
+
+export interface SimulationModalProps {
+  action: Action;
+  baseline: BaselineMetrics;
+  onClose: () => void;
+}

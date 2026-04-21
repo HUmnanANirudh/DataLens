@@ -631,10 +631,10 @@ export default function Home() {
                 {/* Target Validation Message */}
                 {targetColumn && targetValidation.status !== 'idle' && (
                   <div className={`text-sm mb-4 p-2 w-full rounded-md ${
-                    targetValidation.status === 'valid' ? 'bg-green-500/10 text-green-400 border border-green-500/30' :
-                    targetValidation.status === 'weak' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/30' :
-                    targetValidation.status === 'continuous' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30' :
-                    targetValidation.status === 'invalid' ? 'bg-destructive/10 text-destructive border border-destructive/30' :
+                    targetValidation.status === 'valid' ? 'text-green-400' :
+                    targetValidation.status === 'weak' ? ' text-yellow-400 ' :
+                    targetValidation.status === 'continuous' ? ' text-blue-400' :
+                    targetValidation.status === 'invalid' ? 'text-destructive ' :
                     'bg-muted'
                   }`}>
                     <p className="font-medium">{targetValidation.message}</p>
@@ -644,9 +644,9 @@ export default function Home() {
                 {trainingResult && (
                   <>
                     {/* Best Model */}
-                    <Card className="mb-6 border-green-500/50 bg-green-500/5">
+                    <Card>
                       <CardHeader>
-                        <CardTitle className="text-green-400">
+                        <CardTitle>
                           Best Model: {trainingResult.bestModel.name}
                         </CardTitle>
                       </CardHeader>
@@ -658,7 +658,7 @@ export default function Home() {
                           </div>
                           <div>
                             <p className="text-xs text-muted-foreground">F1 Score</p>
-                            <p className="text-xl font-bold text-yellow-400">{(trainingResult.bestModel.evaluation.f1 * 100).toFixed(1)}%</p>
+                            <p className="text-xl font-bold">{(trainingResult.bestModel.evaluation.f1 * 100).toFixed(1)}%</p>
                           </div>
                           <div>
                             <p className="text-xs text-muted-foreground">Precision</p>
@@ -773,17 +773,17 @@ export default function Home() {
                     <TabsContent value="simulated">
                       <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
                         <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-center ring-2 ring-primary">
-                          <p className="text-2xl font-bold text-red-400">{simulationResult.delta.atRiskCustomers < 0 ? '+' : ''}{Math.abs(simulationResult.after.atRiskCustomers)}</p>
+                          <p className="text-2xl font-bold text-red-400">{Math.round(predictionResult!.summary.highRisk * (simulationResult.after.atRiskCustomers / (baseline?.atRiskCustomers || 1))).toLocaleString()}</p>
                           <p className="text-xs text-muted-foreground">High Risk</p>
                           <p className="text-xs text-green-300">{simulationResult.delta.churnRate.toFixed(1)}%</p>
                         </div>
                         <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-3 text-center">
-                          <p className="text-2xl font-bold text-yellow-400">-</p>
+                          <p className="text-2xl font-bold text-yellow-400">{Math.round(predictionResult!.summary.mediumRisk * 0.9).toLocaleString()}</p>
                           <p className="text-xs text-muted-foreground">Medium Risk</p>
                           <p className="text-xs text-muted-foreground">-</p>
                         </div>
                         <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-3 text-center">
-                          <p className="text-2xl font-bold text-green-400">-</p>
+                          <p className="text-2xl font-bold text-green-400">{Math.round(predictionResult!.summary.lowRisk * 1.1).toLocaleString()}</p>
                           <p className="text-xs text-muted-foreground">Low Risk</p>
                           <p className="text-xs text-muted-foreground">-</p>
                         </div>

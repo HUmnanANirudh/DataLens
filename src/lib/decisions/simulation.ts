@@ -36,8 +36,18 @@ export function simulateAction(
 
     const churnReduction = before.atRiskCustomers * Math.abs(retentionImprovement);
     after.atRiskCustomers = Math.max(0, before.atRiskCustomers - Math.floor(churnReduction));
+  } else if (metric === 'LTV') {
+    // LTV improvement - positive delta = increase
+    const ltvChange = Math.max(delta, 0) / 100; // Only increase, don't decrease
+    after.LTV = Number((before.LTV * (1 + ltvChange)).toFixed(2));
+    // Also proportionally reduce at-risk customers (higher LTV = more engaged = less churn)
+    const atRiskReduction = before.atRiskCustomers * ltvChange * 0.3;
+    after.atRiskCustomers = Math.max(0, before.atRiskCustomers - Math.floor(atRiskReduction));
+  } else if (metric === 'conversion_rate') {
+    // Conversion rate improvement
+    const convChange = Math.max(delta, 0) / 100;
+    after.conversionRate = Number((before.conversionRate * (1 + convChange)).toFixed(2));
   }
-  // LTV and conversion_rate don't directly affect churn metrics in this simplified model
   // Calculate delta
   const deltaResult = {
     churnRate: Number((after.churnRate - before.churnRate).toFixed(2)),
