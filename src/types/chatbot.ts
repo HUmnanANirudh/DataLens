@@ -11,7 +11,6 @@ export interface ChatBotProps {
   onClose: () => void;
   context?: ChatContext;
   chartContext?: ChartContextType;
-  // Initial message to auto-send when chat opens
   initialMessage?: string;
 }
 
@@ -34,7 +33,6 @@ export interface ChatContext {
     segment?: string;
     description?: string;
   };
-  // Currently selected action for detailed explanation
   currentAction?: {
     id: string;
     title: string;
@@ -47,7 +45,6 @@ export interface ChatContext {
     affectedUsers: number;
     reasoning: string[];
   };
-  // Dataset info - available immediately after upload
   datasetInfo?: {
     name: string;
     rowCount: number;
@@ -57,16 +54,38 @@ export interface ChatContext {
       name: string;
       type: string;
       uniqueValues: number;
-      // Numeric stats
       min?: number;
       max?: number;
       mean?: number;
       missingPct?: number;
-      // Categorical stats
       topValues?: Array<{ value: string; count: number; pct: string }>;
     }>;
     isValid: boolean;
     validationScore: number;
     validationReasons: string[];
   };
+}
+
+export interface EvidenceChartsProps {
+  riskDistribution?: {
+    highRisk: number;
+    mediumRisk: number;
+    lowRisk: number;
+  };
+  featureImportances?: { feature: string; importance: number }[];
+  onAskAbout?: (context: ChartContextType) => void;
+  simulationActive?: boolean;
+  simulatedMetrics?: {
+    highRisk: number;
+    mediumRisk: number;
+    lowRisk: number;
+  };
+}
+
+export interface ChartDataPoint {
+  type: string;
+  label: string;
+  value: number;
+  feature?: string;
+  color?: string;
 }

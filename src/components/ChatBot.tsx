@@ -110,17 +110,24 @@ export function ChatBot({ isOpen, onClose, context, chartContext }: ChatBotProps
   useEffect(() => {
     if (!isOpen) return;
 
-    // If there's a chart description (user's typed question from evidence charts), pre-fill it
-    // Don't pre-fill for: action cards (auto-send handles those), or the general "overview" ask button
-    const chartDesc = chatContext?.chartData?.description;
-    const chartType = chatContext?.chartData?.type;
-    const isOverview = chartDesc === 'Evidence charts overview' && chartType === 'both';
+    // Delay slightly to ensure context is synced from props
+    const timer = setTimeout(() => {
+      // Check both prop (context from parent) and local state (chatContext) for chart data
+      const chartData = chatContext?.chartData || context?.chartData;
+      if (!chartData) return;
 
-    if (chartDesc && !isOverview && !chatContext?.currentAction) {
-      // User came from evidence charts with a specific question - pre-fill input
-      setInput(chartDesc);
-    }
-  }, [isOpen, chatContext]);
+      const chartDesc = chartData.description;
+      const chartType = chartData.type;
+      const isOverview = chartDesc === 'Evidence charts overview' && chartType === 'both';
+
+      // Don't pre-fill for: action cards (auto-send handles those), or the general "overview" ask button
+      if (chartDesc && !isOverview && !chatContext?.currentAction && !context?.currentAction) {
+        setInput(chartDesc);
+      }
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [isOpen, chatContext, context]);
 
   useEffect(() => {
     // Update local chat context when prop changes

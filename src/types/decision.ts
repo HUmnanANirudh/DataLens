@@ -72,3 +72,55 @@ export interface SegmentProfile {
   topFeatures: string[];
   recommendedActions: string[];
 }
+
+export interface SimulationResult {
+  before: {
+    churnRate: number;
+    atRiskCustomers: number;
+    LTV: number;
+    conversionRate: number;
+  };
+  after: {
+    churnRate: number;
+    atRiskCustomers: number;
+    LTV: number;
+    conversionRate: number;
+  };
+  delta: {
+    churnRate: number;
+    atRiskCustomers: number;
+    LTV: number;
+    conversionRate: number;
+  };
+}
+
+export interface SimulationSectionProps {
+  action: Action;
+  baseline: BaselineMetrics;
+  simulatedResult?: SimulationResult;
+  onSimulate?: () => void;
+  onReset?: () => void;
+  onApply?: () => void;
+}
+
+export interface ActionSectionProps {
+  top3Actions: ScoredAction[];
+  churnAnalysis: {
+    highRiskCount: number;
+    highRiskPercentage: number;
+    mediumRiskCount: number;
+    mediumRiskPercentage: number;
+    lowRiskCount: number;
+    churnRiskDrivers: { feature: string; importance: number }[];
+  };
+  onSimulate?: (action: ScoredAction) => void;
+  onAskAbout?: (action: ScoredAction, context?: string) => void;
+}
+
+export interface ActionCardProps {
+  action: ScoredAction;
+  index: number;
+  chartData?: { name: string; value: number }[];
+  onSimulate?: (action: ScoredAction) => void;
+  onAskAbout?: (action: ScoredAction, context?: string) => void;
+}

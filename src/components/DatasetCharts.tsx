@@ -69,7 +69,6 @@ export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
 
   return (
     <div className="space-y-4">
-      {/* Row 1: Type Distribution */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white/10 border rounded-lg p-4 md:col-span-1">
           <h3 className="text-sm font-semibold mb-2 text-muted-foreground">Column Type Distribution</h3>
@@ -80,8 +79,6 @@ export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
             showLabels={false}
           />
         </div>
-        
-        {/* Row 1b: Unique Values - Now in a wider column or separate row */}
         <div className="bg-white/10 border rounded-lg p-4 md:col-span-2">
           <h3 className="text-sm font-semibold mb-2 text-muted-foreground">Unique Values per Column</h3>
           <BarChart
@@ -96,7 +93,6 @@ export function DatasetCharts({ uploadResult }: DatasetChartsProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
-        {/* Numeric Column Statistics */}
         {numericStats.length > 0 && (
           <div className="bg-white/10 border rounded-lg p-4 h-62.5">
             <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Numeric Column Statistics</h3>

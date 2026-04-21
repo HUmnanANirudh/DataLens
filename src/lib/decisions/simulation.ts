@@ -1,35 +1,10 @@
-import { Action, BaselineMetrics } from '@/types';
-
-export interface SimulationResult {
-  before: {
-    churnRate: number;
-    atRiskCustomers: number;
-    LTV: number;
-    conversionRate: number;
-  };
-  after: {
-    churnRate: number;
-    atRiskCustomers: number;
-    LTV: number;
-    conversionRate: number;
-  };
-  delta: {
-    churnRate: number;
-    atRiskCustomers: number;
-    LTV: number;
-    conversionRate: number;
-  };
-}
+import { Action, BaselineMetrics, SimulationResult } from '@/types';
 
 export function simulateAction(
   action: Action,
   baseline: BaselineMetrics
 ): SimulationResult {
   const { metric, delta } = action.expectedImpact;
-  const affectedUsers = action.affectedUsers;
-
-  // Calculate impact multipliers
-  const impactFactor = delta / 100;
 
   // Calculate before metrics
   const before = {
@@ -42,30 +17,27 @@ export function simulateAction(
   // Calculate after metrics based on the action's target metric
   const after = { ...before };
 
+  // Only affect at-risk customers if the action targets churn
   if (metric === 'churn_rate') {
-    // Churn rate impact
-    const newChurnRate = Math.max(0, before.churnRate * (1 - Math.abs(impactFactor)));
+    // For churn_rate: negative delta = improvement (reduce churn)
+    // If delta = -15, new churn rate = current * (1 - 0.15)
+    const churnChange = Math.min(delta, 0) / 100; // Only reduce, don't increase churn
+    const newChurnRate = Math.max(0, before.churnRate * (1 + churnChange));
     after.churnRate = Number(newChurnRate.toFixed(2));
 
-    // Also reduce at-risk customers proportionally
-    const churnReduction = before.atRiskCustomers * Math.abs(impactFactor);
+    // Reduce at-risk customers proportionally to churn improvement
+    const churnReduction = before.atRiskCustomers * Math.abs(churnChange);
     after.atRiskCustomers = Math.max(0, before.atRiskCustomers - Math.floor(churnReduction));
-  } else if (metric === 'LTV') {
-    // LTV impact
-    after.LTV = Number((before.LTV * (1 + impactFactor)).toFixed(2));
-  } else if (metric === 'conversion_rate') {
-    // Conversion rate impact
-    after.conversionRate = Number((before.conversionRate * (1 + impactFactor)).toFixed(2));
   } else if (metric === 'retention') {
-    // Retention is inverse of churn
-    const retentionImprovement = impactFactor;
-    const newChurnRate = before.churnRate * (1 - retentionImprovement);
+    // Retention is inverse of churn - improvement reduces churn
+    const retentionImprovement = Math.min(delta, 0) / 100;
+    const newChurnRate = before.churnRate * (1 + retentionImprovement);
     after.churnRate = Number(Math.max(0, newChurnRate).toFixed(2));
 
-    const churnReduction = before.atRiskCustomers * retentionImprovement;
+    const churnReduction = before.atRiskCustomers * Math.abs(retentionImprovement);
     after.atRiskCustomers = Math.max(0, before.atRiskCustomers - Math.floor(churnReduction));
   }
-
+  // LTV and conversion_rate don't directly affect churn metrics in this simplified model
   // Calculate delta
   const deltaResult = {
     churnRate: Number((after.churnRate - before.churnRate).toFixed(2)),

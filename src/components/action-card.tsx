@@ -12,16 +12,8 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 import { MessageCircleIcon, PlayIcon, ChevronDownIcon, ChevronUpIcon, HelpCircleIcon } from 'lucide-react';
-import { ScoredAction } from '@/types';
+import { ActionCardProps } from '@/types';
 import { cn } from '@/lib/utils';
-
-interface ActionCardProps {
-  action: ScoredAction;
-  index: number;
-  chartData?: { name: string; value: number }[];
-  onSimulate?: (action: ScoredAction) => void;
-  onAskAbout?: (action: ScoredAction, context?: string) => void;
-}
 
 export function ActionCard({
   action,
@@ -106,7 +98,7 @@ export function ActionCard({
                 dataKey="value"
                 nameKey="name"
                 fill="var(--chart-1)"
-                height={128}
+                height={156}
                 showGrid={false}
                 showYAxis={false}
               />

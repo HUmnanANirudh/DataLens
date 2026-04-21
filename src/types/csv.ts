@@ -44,3 +44,8 @@ export interface UploadResult {
 export interface DatasetChartsProps {
   uploadResult: UploadResult;
 }
+
+export interface DatasetValidatorProps {
+  validation: DatasetValidationResult;
+  onReset?: () => void;
+}

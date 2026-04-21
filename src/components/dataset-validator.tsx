@@ -3,15 +3,11 @@
 import { AlertTriangleIcon, UploadIcon } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { DatasetValidationResult } from '@/types';
+import { DatasetValidatorProps} from '@/types';
 import { Badge } from '@/components/ui/badge';
 
-interface DatasetValidatorProps {
-  validation: DatasetValidationResult;
-  onReset?: () => void;
-}
-
 export function DatasetValidator({ validation, onReset }: DatasetValidatorProps) {
+  
   if (validation.isValid) {
     return null;
   }

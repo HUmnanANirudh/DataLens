@@ -455,20 +455,19 @@ export default function Home() {
 
   const handleChartAsk = useCallback((context: ChartContextType) => {
     setChartContext(context);
-    if (chatContext) {
-      setChatContext({
-        ...chatContext,
-        chartData: {
-          type: context.chartType,
-          feature: context.feature,
-          value: context.value,
-          description: context.description,
-          segment: context.segment,
-        },
-      });
-    }
+    // Always set chartData for evidence charts - don't require chatContext
+    setChatContext(prev => ({
+      ...prev,
+      chartData: {
+        type: context.chartType,
+        feature: context.feature,
+        value: context.value,
+        description: context.description,
+        segment: context.segment,
+      },
+    }));
     setIsChatOpen(true);
-  }, [chatContext]);
+  }, []);
 
   const isProcessing = loading || training || predicting || deciding;
   const analysisReady = uploadResult && datasetValidation?.isValid && trainingResult && predictionResult && decisions && churnAnalysis;

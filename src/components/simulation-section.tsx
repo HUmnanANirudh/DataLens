@@ -6,18 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { ArrowRightIcon, RefreshCwIcon, CheckIcon } from 'lucide-react';
-import { Action, BaselineMetrics } from '@/types';
+import { SimulationSectionProps } from '@/types';
 import { cn } from '@/lib/utils';
-import { SimulationResult } from '@/lib/decisions/simulation';
-
-interface SimulationSectionProps {
-  action: Action;
-  baseline: BaselineMetrics;
-  simulatedResult?: SimulationResult;
-  onSimulate?: () => void;
-  onReset?: () => void;
-  onApply?: () => void;
-}
 
 export function SimulationSection({
   action,
@@ -78,7 +68,6 @@ export function SimulationSection({
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Baseline vs Simulated Comparison */}
         <div className="grid grid-cols-2 gap-6">
           {/* Before */}
           <div className="space-y-3">
@@ -141,8 +130,6 @@ export function SimulationSection({
             )}
           </div>
         </div>
-
-        {/* Delta Visualization */}
         {isSimulated && result && (
           <>
             <Separator />
@@ -183,12 +170,10 @@ export function SimulationSection({
             </div>
           </>
         )}
-
-        {/* Call to Action */}
         {!isSimulated && (
           <div className="pt-4">
             <p className="text-sm text-muted-foreground text-center">
-              Click "Run Simulation" to see projected impact of this action
+              Click `&quot;Run Simulation&quot;` to see projected impact of this action
             </p>
           </div>
         )}

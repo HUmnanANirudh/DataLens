@@ -11,32 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { BarChartIcon, PieChartIcon, MessageCircleIcon, SendIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ChartContextType as ChartContext } from '@/types';
-
-interface EvidenceChartsProps {
-  riskDistribution?: {
-    highRisk: number;
-    mediumRisk: number;
-    lowRisk: number;
-  };
-  featureImportances?: { feature: string; importance: number }[];
-  onAskAbout?: (context: ChartContext) => void;
-  simulationActive?: boolean;
-  simulatedMetrics?: {
-    highRisk: number;
-    mediumRisk: number;
-    lowRisk: number;
-  };
-}
-
-
-interface ChartDataPoint {
-  type: string;
-  label: string;
-  value: number;
-  feature?: string;
-  color?: string;
-}
+import { ChartContextType,ChartDataPoint,EvidenceChartsProps } from '@/types';
 
 export function EvidenceCharts({
   riskDistribution,
@@ -50,7 +25,7 @@ export function EvidenceCharts({
   const [inlineQuestion, setInlineQuestion] = useState('');
   const [popoverOpen, setPopoverOpen] = useState(false);
 
-  const handleAskAbout = useCallback((context: ChartContext) => {
+  const handleAskAbout = useCallback((context: ChartContextType) => {
     onAskAbout?.(context);
   }, [onAskAbout]);
 
@@ -60,7 +35,7 @@ export function EvidenceCharts({
       chartType: hoveredData.type,
       feature: hoveredData.feature,
       value: hoveredData.value,
-      segment: hoveredData.label, // Include the segment label (e.g., "High Risk", "Tenure")
+      segment: hoveredData.label,
       description: inlineQuestion,
     });
     setInlineQuestion('');
@@ -71,17 +46,14 @@ export function EvidenceCharts({
     return null;
   }
 
-  // Use simulated metrics if simulation is active, otherwise use original
   const displayMetrics = simulationActive && simulatedMetrics ? simulatedMetrics : riskDistribution;
 
-  // Prepare risk distribution data
   const riskData = displayMetrics ? [
     { name: 'High Risk', value: displayMetrics.highRisk, color: simulationActive ? 'bg-red-500/30' : 'bg-red-500' },
     { name: 'Medium Risk', value: displayMetrics.mediumRisk, color: simulationActive ? 'bg-yellow-500/30' : 'bg-yellow-500' },
     { name: 'Low Risk', value: displayMetrics.lowRisk, color: simulationActive ? 'bg-green-500/30' : 'bg-green-500' },
   ] : [];
 
-  // Prepare feature importance data
   const importanceData = featureImportances
     ?.map(f => ({
       name: f.feature.length > 20 ? f.feature.slice(0, 20) + '...' : f.feature,

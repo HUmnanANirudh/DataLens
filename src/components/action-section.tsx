@@ -4,20 +4,7 @@ import { ScoredAction } from '@/types';
 import { ActionCard } from '@/components/action-card';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-
-interface ActionSectionProps {
-  top3Actions: ScoredAction[];
-  churnAnalysis: {
-    highRiskCount: number;
-    highRiskPercentage: number;
-    mediumRiskCount: number;
-    mediumRiskPercentage: number;
-    lowRiskCount: number;
-    churnRiskDrivers: { feature: string; importance: number }[];
-  };
-  onSimulate?: (action: ScoredAction) => void;
-  onAskAbout?: (action: ScoredAction, context?: string) => void;
-}
+import { ActionSectionProps } from '@/types';
 
 export function ActionSection({
   top3Actions,
@@ -27,18 +14,29 @@ export function ActionSection({
 }: ActionSectionProps) {
   // Prepare chart data for each action based on churn drivers
   const prepareChartData = (action: ScoredAction) => {
+    const actionText = (action.title + ' ' + action.reasoning.join(' ')).toLowerCase();
+
     const relevantDrivers = churnAnalysis.churnRiskDrivers
       .filter(driver => {
-        const reason = action.reasoning.join(' ').toLowerCase();
-        return driver.feature.toLowerCase().includes('contract') ||
-               driver.feature.toLowerCase().includes('tenure') ||
-               driver.feature.toLowerCase().includes('activity') ||
-               driver.feature.toLowerCase().includes('engagement') ||
-               driver.feature.toLowerCase().includes('usage') ||
-               driver.feature.toLowerCase().includes('price') ||
-               driver.feature.toLowerCase().includes('discount');
+        const driverText = driver.feature.toLowerCase();
+        // Check if action mentions this driver directly or via common synonyms
+        return actionText.includes(driverText) ||
+               // Check for partial matches with common churn-related terms
+               (actionText.includes('high risk') && actionText.includes('retention')) ||
+               (actionText.includes('medium risk') && actionText.includes('upsell')) ||
+               (actionText.includes('tenure') && driverText.includes('tenure')) ||
+               (actionText.includes('contract') && driverText.includes('contract')) ||
+               (actionText.includes('engagement') && (driverText.includes('engagement') || driverText.includes('usage')));
       })
       .slice(0, 5);
+
+    // Fallback: if no drivers matched, show top drivers
+    if (relevantDrivers.length === 0) {
+      return churnAnalysis.churnRiskDrivers.slice(0, 5).map(d => ({
+        name: d.feature.length > 12 ? d.feature.slice(0, 12) + '...' : d.feature,
+        value: Math.round(d.importance * 100),
+      }));
+    }
 
     return relevantDrivers.map(d => ({
       name: d.feature.length > 12 ? d.feature.slice(0, 12) + '...' : d.feature,
