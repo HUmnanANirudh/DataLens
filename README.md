@@ -3,10 +3,11 @@ An AI Growth Strategy Engine for Fintech
 
 ## The Problem
 
-Indian fintech companies lose ~18-25% of customers annually to churn. Traditional analytics tells you *what happened*
-DataLens tells you *what to do about it*.
+Indian fintech companies lose ~18-25% of customers annually to churn. Traditional analytics tells you what happened
 
-Most analytics tools generate dashboards. DataLens generates decisions.
+Fintech teams already have dashboards. They know their churn rate.
+
+What they lack is a system that converts that signal into specific actions.
 
 ---
 
@@ -15,22 +16,33 @@ Most analytics tools generate dashboards. DataLens generates decisions.
 A decision-first analytics system that converts raw customer CSV data into ranked, actionable growth strategies ready to implement.
 
 **Input**: Customer data CSV (any format)
-**Output**: Top 3 prioritized actions with simulated impact, reasoning, and affected customer count
+
+**Output**: Top 3 actions with simulated impact, reasoning, and affected customer count
 
 https://github.com/user-attachments/assets/3f23c248-eeab-4da5-af1e-07902655e092
 
 ---
 
-## Why DataLens for Fintech?
+## Testing with Sample Data
 
-- Built for customer lifecycle challenges — churn prediction, retention optimization, revenue protection
-- Works with your existing CSV exports (no vendor lock-in, no integrations needed)
+To test DataLens without your own dataset, you can use the provided sample fintech churn dataset:
+
+1. **Download** the sample CSV:[customer_churn_dataset-training-master (2).csv](https://github.com/user-attachments/files/26900315/customer_churn_dataset-training-master.2.csv).
+2. **Upload** it to the DataLens interface.
+3. **Run Analysis** to see predicted churn, top drivers, and actionable recommendations.
+
+---
+
+## Why DataLens ?
+
+- Built for customer lifecycle challenges like churn prediction, retention optimization, revenue protection
+- Works with your existing CSV exports
 - Deterministic simulation shows exact impact before you commit
 - AI chat interface lets any stakeholder explore the "why" behind recommendations
 
-**Target users**: Growth leads, product managers, and churn analysts at Indian fintechs (lending, payments, neobanks, insurtech)
+**Target users**: Growth leads, product managers, and churn analysts
 
-**Market context**: With 400+ fintech startups in India and average CACs rising, retention is the next battleground. A 5% reduction in churn translates to crores in saved revenue.
+**Market context**: There are 400+ fintech startups in India and average CAC (Customer acquisition cost) rising. A 5% reduction in churn translates to crores in saved revenue.
 
 ---
 
@@ -58,17 +70,7 @@ https://github.com/user-attachments/assets/3f23c248-eeab-4da5-af1e-07902655e092
 - **UI**: shadcn/ui + Tailwind CSS
 - **Charts**: Recharts
 - **Parsing**: Papaparse (streaming CSV)
-
----
-
-## Innovation: Decisions, Not Dashboards
-
-Traditional analytics = "Your churn rate is 18.2%"
-
-DataLens = "Offer annual contracts to monthly customers — this targets 1,842 high-risk users and reduces churn by 12%. Confidence: 89%."
-
-It transforms predictions into ranked actions with impact and confidence.
-
+  
 ---
 
 ## How It Works
@@ -129,20 +131,9 @@ CSV Upload → Validation (customer analytics check)
 
 ## Why It Scales
 
-1. **No vendor dependency** — works with any CSV, any CRM export
+1. **No vendor dependency** — works with any CSV
 2. **Vertical agnostic** — same engine handles fintech, e-commerce, SaaS churn
 3. **Lightweight** — no complex data pipelines or integrations needed
-4. **Indian market fit** — handles regional data quirks (PAN, UPI, multi-language name fields)
-
----
-
-## Testing with Sample Data
-
-To test DataLens without your own dataset, you can use the provided sample fintech churn dataset:
-
-1. **Download** the sample CSV:[customer_churn_dataset-training-master (2).csv](https://github.com/user-attachments/files/26900315/customer_churn_dataset-training-master.2.csv).
-2. **Upload** it to the DataLens interface.
-3. **Run Analysis** to see predicted churn, top drivers, and actionable recommendations.
 
 ---
 
